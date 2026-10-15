@@ -230,6 +230,9 @@ export function createFlowerLayer({ read, colorOf }) {
     },
     send(fromLngLat, job) {
       if (!origin || reduced.matches) return
+      map.stop()
+      map.jumpTo({center:fromLngLat,zoom:Math.max(15.5,map.getZoom())})
+      map.easeTo({center:job.lngLat,duration:2400,easing:t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2})
       map.triggerRepaint()
       flights.push({ a: local(fromLngLat), job, t: performance.now() })
     },
@@ -280,12 +283,12 @@ export function createFlowerLayer({ read, colorOf }) {
       // Messengers: a bright seed arcing from you to the flower.
       for (let i = flights.length - 1; i >= 0; i--) {
         const fl = flights[i]
-        const p = (performance.now() - fl.t) / 1700
+        const p = (performance.now() - fl.t) / 2400
         if (!fl.mesh) {
           fl.mesh = new Group()
-          for (let q = 0; q < 10; q++) {
-            const s = new Mesh(new SphereGeometry(0.09 * (1 - q / 12), 12, 8), new MeshStandardMaterial({ color: '#ffe3a0', emissive: '#f0b44a', emissiveIntensity: 2.5 - q * 0.2, transparent: true, opacity: 1 - q / 10 }))
-            fl.mesh.add(s)
+          for (let q = 0; q < 18; q++) {
+            const s = new Mesh(new SphereGeometry(0.22 * (1 - q / 22), 12, 8), new MeshStandardMaterial({ color: q<3?'#fff9d8':'#ffbe45', emissive: '#ffc65b', emissiveIntensity: 4.5 - q * 0.15, toneMapped:false, depthTest:false, transparent: true, opacity: 1 - q / 20 }))
+            s.renderOrder=20;fl.mesh.add(s)
           }
           root.add(fl.mesh)
         }
@@ -302,8 +305,8 @@ export function createFlowerLayer({ read, colorOf }) {
           curve.getPoint(ee, s.position)
           s.scale.setScalar(k)
         })
-        fl.mesh.visible = p < 1.25
-        if (p > 1.3) {
+        fl.mesh.visible = p < 1.5
+        if (p > 1.55) {
           root.remove(fl.mesh)
           disposeObject(fl.mesh)
           flights.splice(i, 1)

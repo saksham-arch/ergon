@@ -74,6 +74,7 @@ function Nav() {
         <a href="#top" className="wordmark" aria-label="Ergon home">ergon</a>
         <nav aria-label="Primary">
           <a href="#wait">The climb</a>
+          <a href="#post-work">Post work</a>
           <a href="#record">The vase</a>
           <a href="#tools">The tools</a>
           <a href="#craft">{t('craft')}</a>

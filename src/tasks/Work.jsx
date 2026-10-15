@@ -3,7 +3,6 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { JOBS, TRADES, DEMO_ORIGIN, money, tradeOf } from '../hermes/jobs.js'
 import { jobStore, selectJobs, activeHold, makeHold, setInterest, dateLabel, distanceKm } from '../domain/jobs.js'
 import { useStore } from '../domain/storage.js'
-import { checkJob } from '../domain/offers.js'
 import { useI18n } from '../i18n/index.jsx'
 import { Choice, SaveStatus, ClearDraft } from './common.jsx'
 import Listen from '../ui/Listen.jsx'
@@ -15,6 +14,7 @@ export default function Work(){
  const {t,lang,setLang}=useI18n(),[state,set,status]=useStore(jobStore),[geo,setGeo]=useState('idle'),[now,setNow]=useState(Date.now()),[mapAttempt,setMapAttempt]=useState(0)
  useStore(marketplace)
  const jobs=allJobs()
+ const [listenLang,setListenLang]=useState(lang)
  const [panel,setPanel]=useState('jobs'),[place,setPlace]=useState(null)
  const [railWidth,setRailWidth]=useState(340),[railHeight,setRailHeight]=useState(null)
  const resizeRail=e=>{
@@ -61,8 +61,8 @@ export default function Work(){
  <div className="work-results">
  {selected?<section className="job-detail" aria-labelledby="offer-heading"><button onClick={back}>{t('allWork')}</button><p className="task-eyebrow">{lang==='hi'?tradeOf(selected.trade).hi:tradeOf(selected.trade).label}</p><h2 id="offer-heading" tabIndex={-1} ref={title}>{text(selected,'title')}</h2><p className="job-big-pay">{money(selected.pay)} <small>/ {t(`unit_${selected.unit}`)}</small></p>
  <dl className="terms-grid">{termRows(selected).map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
- <Listen lines={[[`${text(selected,'title')}. ${termRows(selected).map(([k,v])=>`${k}: ${v}`).join('. ')}`,lang==='hi'?'hi-IN':'en-IN']]}/>
- <div className="action-row"><a className="booking-link primary" href={`#book-work/${selected.id}`}>{say('Request this work','काम का अनुरोध करें')}</a><button onClick={()=>checkJob(selected)}>{t('checkTerms')}</button><button onClick={()=>set(s=>setInterest(s,selected.id,!s.interest[selected.id]))}>{state.interest[selected.id]?say('Remove interest','रुचि हटाएँ'):say('Send interest','रुचि भेजें')}</button><button onClick={()=>set(s=>({...s,hold:hold?.id===selected.id?null:makeHold(selected.id)}))}>{hold&&hold.id!==selected.id?(lang==='hi'?'पिछला स्थानीय होल्ड बदलें':'Replace previous local hold'):(hold?.id===selected.id?say('Release hold','होल्ड हटाएँ'):say('Hold for 30 min','30 मिनट होल्ड करें'))}</button></div>
+ <div className="map-listen"><label>Listen in<select value={listenLang} onChange={e=>setListenLang(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label><Listen key={`${selected.id}-${listenLang}`} lines={[[listenLang==='hi'?`${selected.titleHi}. मज़दूरी ${selected.pay} रुपये। ${selected.hoursHi}। ${selected.placeHi}। ${selected.bringHi}`:`${selected.title}. Pay ${selected.pay} rupees per ${selected.unit}. ${selected.hours}. ${selected.place}. ${selected.bring}`,listenLang==='hi'?'hi-IN':'en-IN']]}/></div>
+ <div className="action-row"><a className="booking-link primary" href={`#book-work/${selected.id}`}>{say('Request this work','काम का अनुरोध करें')}</a><button onClick={()=>set(s=>setInterest(s,selected.id,!s.interest[selected.id]))}>{state.interest[selected.id]?say('Remove interest','रुचि हटाएँ'):say('Send interest','रुचि भेजें')}</button><button onClick={()=>set(s=>({...s,hold:hold?.id===selected.id?null:makeHold(selected.id)}))}>{hold&&hold.id!==selected.id?(lang==='hi'?'पिछला स्थानीय होल्ड बदलें':'Replace previous local hold'):(hold?.id===selected.id?say('Release hold','होल्ड हटाएँ'):say('Hold for 30 min','30 मिनट होल्ड करें'))}</button></div>
  {state.interest[selected.id]&&<p role="status" className="task-note">{say('Interest noted','रुचि दर्ज हुई')}</p>}
 
  </section>:<>
