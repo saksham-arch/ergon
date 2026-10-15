@@ -34,6 +34,7 @@ export const hall = {
   p: 0,
   vh: 1,
   active: false, // the hall is on screen
+  mouth: null, // projected mouth in viewport pixels, updated by the gallery camera
   hasVideo: false,
   ranges: null, // frieze slot u-ranges, once painted
   pointer: { x: 0, y: 0, nx: 0, ny: 0, inside: false },

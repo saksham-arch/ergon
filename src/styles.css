@@ -2870,3 +2870,207 @@ span.slab {
     animation: none;
   }
 }
+
+/* The hill's clay fades into the dusk instead of meeting it at a seam. */
+.scene::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 14vh;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(192, 84, 37, 0), #c05425);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+
+/* Only once the hill starts to leave, so it never tints the cards. */
+.past-climb .scene::after {
+  opacity: 1;
+}
+
+/* Out of the dark hall: the title stays light until the map's parchment. */
+.agora {
+  background: linear-gradient(180deg, #0b0807 0, #17100c 300px, #6b4630 470px, #efe5d3 640px);
+}
+
+.agora-kicker {
+  color: var(--gold);
+}
+
+.agora-kicker img {
+  mix-blend-mode: screen;
+  filter: invert(1) sepia(0.7) saturate(1.6) hue-rotate(-14deg) brightness(0.95);
+  box-shadow: 0 0 0 1px rgba(232, 176, 106, 0.5);
+}
+
+.agora-title {
+  color: var(--cream);
+}
+
+.agora-title span {
+  color: var(--gold);
+}
+
+.agora-sub {
+  color: rgba(243, 234, 219, 0.72);
+}
+
+/* ---------- The frieze strip ---------- */
+
+.hall .frieze-nav.live {
+  pointer-events: auto;
+}
+
+.frieze-nav {
+  left: 50%;
+  bottom: 18px;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(16, 11, 8, 0.6);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: inset 0 0 0 1px rgba(243, 234, 219, 0.12), 0 20px 40px -20px rgba(0, 0, 0, 0.8);
+}
+
+.fn-step {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--cream);
+  transition: background 0.2s;
+}
+
+.fn-step:hover {
+  background: rgba(243, 234, 219, 0.1);
+}
+
+.fn-fig {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.fn-disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #c65b2b;
+  background-size: 130%;
+  background-position: center 26%;
+  box-shadow: 0 0 0 1px rgba(243, 234, 219, 0.2);
+  filter: grayscale(0.4) brightness(0.8);
+  transition: transform 0.25s var(--ease), filter 0.25s, box-shadow 0.25s;
+}
+
+.fn-fig:hover .fn-disc,
+.fn-fig:focus-visible .fn-disc {
+  filter: none;
+  transform: scale(1.12);
+}
+
+.fn-fig.on .fn-disc {
+  filter: none;
+  box-shadow: 0 0 0 2px var(--gold), 0 0 18px -2px rgba(232, 176, 106, 0.8);
+}
+
+.fn-fig em {
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  translate: -50% 4px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--slip);
+  background: var(--cream);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, translate 0.2s var(--ease);
+}
+
+.fn-fig:hover em,
+.fn-fig:focus-visible em {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+.fn-hint {
+  padding: 0 12px 0 6px;
+  font-size: 12px;
+  color: rgba(243, 234, 219, 0.55);
+  white-space: nowrap;
+}
+
+/* Panels leave room for the strip below them. */
+.panel {
+  top: calc(50% - 34px);
+  max-height: calc(100vh - 210px);
+}
+
+@media (max-width: 860px) {
+  .fn-hint,
+  .fn-step {
+    display: none;
+  }
+
+  .fn-fig {
+    width: 34px;
+    height: 34px;
+  }
+
+  .fn-disc {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* The city is the final room of the scrolling world. */
+.agora { height: 240vh; padding: 0; background: #17120f; --ui: 0; }
+.agora-stage { position: sticky; top: 0; height: 100svh; padding: 72px 16px 16px; }
+.agora-frame { height: 100%; min-height: 0; }
+.agora-dawn { position: absolute; inset: 0; z-index: 2; background: linear-gradient(0deg, rgba(23,18,15,.75), rgba(23,18,15,.2)), url('/art/agora-dawn.png') center/cover; pointer-events: none; }
+.agora-head { position: absolute; z-index: 2; top: 13%; left: 8%; right: 8%; pointer-events: none; }
+.agora-head .agora-title, .agora-head .agora-sub { color: #fff4df; text-shadow: 0 2px 20px #17120f; }
+.agora-head .agora-title span, .agora-head .agora-kicker { color: #efb978; }
+.agora .ui { opacity: var(--ui); visibility: hidden; pointer-events: none; }
+.agora.ui-on .ui { visibility: visible; pointer-events: auto; }
+.sheet-demo { padding: 10px 18px; font-size: 12px; line-height: 1.5; background: #eadbc4; color: #68442d; }
+.rail button, .fn-step, .fn-fig { min-width: 44px; min-height: 44px; }
+:focus-visible { outline: 3px solid #ca8f48; outline-offset: 4px; }
+@media (max-width: 860px) {
+  .agora-stage { padding: 64px 8px 8px; }
+  .agora-frame { display: block; height: 100%; }
+  .agora-map { position: absolute; inset: 0; height: 100%; }
+  .agora .sheet { position: absolute; top: auto; left: 8px; right: 8px; bottom: 8px; max-height: 48%; border-radius: 18px; }
+  .agora .locate { top: 58px; bottom: auto; }
+  .agora-head { top: 15%; left: 6%; right: 6%; }
+  .agora-sub { font-size: 16px; }
+  .frieze-nav { max-width: calc(100vw - 24px); overflow-x: auto; justify-content: flex-start; }
+  .fn-fig { flex-shrink: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media (max-width: 860px) {
+  .panel.left, .panel.right { top: auto; bottom: 84px; max-height: 48svh; }
+  .drawer { bottom: 84px; max-height: calc(100svh - 160px); overflow-y: auto; }
+  .coda-actions { flex-wrap: wrap; }
+}
+
+/* The decorative boulder canvas must never intercept the world controls. */
+.stage, .stage * { pointer-events: none !important; }

@@ -1,123 +1,62 @@
-// What goes on Themis' scales. Offers are weighed term by term; schemes are
-// matched from a few plain questions. Reference rates are mock figures;
-// scheme rules are summarised from public scheme pages and should be checked
-// at a CSC or the scheme's own portal before relying on them.
-
-export const LOCAL_RATE = {
-  mason: 900,
-  painter: 850,
-  electrician: 1000,
-  plumber: 950,
-  carpenter: 1000,
-  helper: 650,
-  housekeeping: 600,
-  loading: 700,
-}
-
-// Each token: side 'fair' (left pan) or 'risk' (right pan), a weight, a line.
-export function weighOffer(o) {
-  const t = []
-  const ref = LOCAL_RATE[o.trade] ?? 800
-  if (o.pay >= ref * 0.9 && o.pay <= ref * 1.8) t.push({ id: 'pay', side: 'fair', w: 2, label: `Pay is fair for the area (about ₹${ref.toLocaleString('en-IN')} a day)` })
-  else if (o.pay < ref * 0.75) t.push({ id: 'pay', side: 'risk', w: 2, label: `Pay is well below the local rate of about ₹${ref.toLocaleString('en-IN')}` })
-  else if (o.pay > ref * 2) t.push({ id: 'pay', side: 'risk', w: 2, label: 'Pay is far above the local rate, a common bait in fake listings' })
-  else t.push({ id: 'pay', side: 'fair', w: 1, label: 'Pay is a little under the local rate; you can ask for more' })
-
-  if (o.hours <= 9) t.push({ id: 'hours', side: 'fair', w: 1, label: `${o.hours} hours a day` })
-  else t.push({ id: 'hours', side: 'risk', w: 1, label: `${o.hours} hours a day: time beyond 9 hours is overtime, paid at twice the rate` })
-
-  if (o.payday === 'daily' || o.payday === 'weekly') t.push({ id: 'payday', side: 'fair', w: 1, label: `Paid ${o.payday}` })
-  else t.push({ id: 'payday', side: 'risk', w: 1, label: 'Paid only when the job ends: ask for weekly part-payment' })
-
-  if (o.address) t.push({ id: 'address', side: 'fair', w: 1, label: 'Site address given' })
-  else t.push({ id: 'address', side: 'risk', w: 2, label: 'No site address, only a phone number' })
-
-  if (o.fee > 0) t.push({ id: 'fee', side: 'risk', w: 4, label: `Asks for ₹${o.fee.toLocaleString('en-IN')} upfront. Genuine employers never charge you to work.` })
-
-  if (o.written) t.push({ id: 'written', side: 'fair', w: 1, label: 'Terms in writing, on Ergon' })
-  else t.push({ id: 'written', side: 'risk', w: 1, label: 'Nothing in writing yet' })
-
-  if (o.verified) t.push({ id: 'verified', side: 'fair', w: 1, label: 'Employer verified, with past hires' })
-  else t.push({ id: 'verified', side: 'risk', w: 1, label: 'Employer not verified yet' })
-
-  const fair = t.filter((x) => x.side === 'fair').reduce((a, x) => a + x.w, 0)
-  const risk = t.filter((x) => x.side === 'risk').reduce((a, x) => a + x.w, 0)
-  let verdict
-  if (o.fee > 0 || risk >= 6) verdict = { word: 'Walk away', tone: 'bad', line: 'Too much on the wrong side. Do not pay anything, and report the listing.' }
-  else if (risk >= 2) verdict = { word: 'Ask first', tone: 'mid', line: 'Mostly fair, with terms to settle before you go. Ask for them in writing.' }
-  else verdict = { word: 'Fair offer', tone: 'good', line: 'The terms are clear and fair. Your record will show this job once it’s done.' }
-  return { tokens: t, fair, risk, verdict }
-}
-
+// Decision aid: sample benchmarks and questions, never a legal minimum or safety verdict.
+export const LOCAL_RATE = { mason:900,painter:850,electrician:1000,plumber:950,carpenter:1000,helper:650,housekeeping:600,loading:700 }
 export const PRESETS = {
-  fair: { trade: 'plumber', pay: 1000, hours: 8, payday: 'daily', address: true, fee: 0, written: true, verified: true },
-  doubt: { trade: 'mason', pay: 700, hours: 11, payday: 'end', address: true, fee: 0, written: false, verified: false },
-  scam: { trade: 'helper', pay: 2600, hours: 8, payday: 'end', address: false, fee: 5000, written: false, verified: false },
+ fair:{trade:'plumber',pay:'1000',unit:'day',hours:'8',payday:'daily',address:'yes',fee:'0',written:'yes',verified:'yes'},
+ doubt:{trade:'mason',pay:'700',unit:'day',hours:'11',payday:'end',address:'yes',fee:null,written:'unknown',verified:'unknown'},
+ scam:{trade:'helper',pay:'2600',unit:'day',hours:'8',payday:'end',address:'no',fee:'5000',written:'no',verified:'unknown'},
 }
-
-export const SCHEMES = [
-  {
-    id: 'eshram',
-    name: 'e-Shram card',
-    what: 'A national ID for unorganised workers, and the door to most other schemes.',
-    need: ['Aadhaar', 'Phone linked to Aadhaar', 'Bank account'],
-    where: 'eshram.gov.in, or any Common Service Centre (CSC)',
-    ok: (a) => a.age >= 16 && a.age <= 59 && !a.epf,
-  },
-  {
-    id: 'bocw',
-    name: 'Construction workers’ welfare board',
-    what: 'Your state board helps with tools, children’s education, maternity and accident cover.',
-    need: ['Aadhaar', 'Proof of 90 days of building work in the last year', 'Bank account'],
-    where: 'Your state BOCW board office or a CSC',
-    ok: (a) => a.work === 'construction' && a.age >= 18 && a.age <= 60,
-  },
-  {
-    id: 'pmsym',
-    name: 'PM Shram Yogi Maan-dhan',
-    what: 'A pension of ₹3,000 a month after 60, for a small monthly contribution that the government matches.',
-    need: ['Aadhaar', 'Savings or Jan Dhan account'],
-    where: 'Any CSC',
-    ok: (a) => a.age >= 18 && a.age <= 40 && a.income === 'low' && !a.epf,
-  },
-  {
-    id: 'svanidhi',
-    name: 'PM SVANidhi',
-    what: 'Working-capital loans for street vendors, growing with each one you repay on time.',
-    need: ['Vending certificate, or a letter of recommendation from your town body', 'Aadhaar', 'Bank account'],
-    where: 'pmsvanidhi.mohua.gov.in, or a CSC',
-    ok: (a) => a.work === 'vending',
-  },
-  {
-    id: 'pmsby',
-    name: 'PM Suraksha Bima',
-    what: 'Accident insurance of ₹2 lakh for ₹20 a year, taken from your bank account.',
-    need: ['Bank account', 'Aadhaar'],
-    where: 'Your bank branch',
-    ok: (a) => a.age >= 18 && a.age <= 70,
-  },
-  {
-    id: 'pmjjby',
-    name: 'PM Jeevan Jyoti Bima',
-    what: 'Life cover of ₹2 lakh for ₹436 a year.',
-    need: ['Bank account', 'Aadhaar'],
-    where: 'Your bank branch',
-    ok: (a) => a.age >= 18 && a.age <= 50,
-  },
-  {
-    id: 'pmjay',
-    name: 'Ayushman Bharat (PM-JAY)',
-    what: 'Cashless hospital care up to ₹5 lakh a year per family, at listed hospitals, if your family is eligible.',
-    need: ['Ration card or Aadhaar to check eligibility'],
-    where: 'Any CSC or listed hospital’s Ayushman desk',
-    ok: (a) => a.income === 'low',
-  },
-]
-
-export function matchSchemes(a) {
-  const yes = SCHEMES.filter((s) => s.ok(a))
-  const todo = []
-  if (!a.aadhaar) todo.push({ id: 'aadhaar', label: 'Get an Aadhaar first: almost every scheme needs it' })
-  if (!a.bank) todo.push({ id: 'bank', label: 'Open a zero-balance Jan Dhan bank account' })
-  return { yes, todo }
+const known = x => x === true || x === 'yes'
+const unknown = x => x === null || x === undefined || x === 'unknown'
+export function numeric(value, min, max) {
+ if(value === null || value === undefined || String(value).trim()==='') return null
+ const n=Number(value)
+ return Number.isFinite(n)&&n>=min&&n<=max?n:null
 }
+export function payBand(pay,reference) {
+ if(pay < reference*.75) return 'wellBelow'
+ if(pay < reference*.9) return 'below'
+ if(pay <= reference*1.1) return 'near'
+ if(pay <= reference*2) return 'above'
+ return 'wellAbove'
+}
+export function weighOffer(o) {
+ const errors={}
+ const pay=numeric(o.pay,.01,10000000), hours=o.hours===null?null:numeric(o.hours,1,24), fee=o.fee===null?null:numeric(o.fee,0,10000000)
+ if(pay===null) errors.pay='payError'
+ if(o.hours!==null && hours===null) errors.hours='hoursError'
+ if(o.fee!==null && fee===null) errors.fee='feeError'
+ if(!['day','shift','job','month'].includes(o.unit)) errors.unit='unit'
+ const tokens=[]
+ const add=(id,side,w,en,hi)=>tokens.push({id,side,w,label:en,hi})
+ const ref=LOCAL_RATE[o.trade]??800
+ const band=pay===null?null:payBand(pay,ref)
+ if(o.unit!=='day') add('pay','risk',0,'Daily comparison unavailable for this pay unit. Ask how the amount and scope were agreed.','इस इकाई की दैनिक दर से तुलना नहीं हो सकती। रकम और काम का दायरा पूछें।')
+ else if(pay!==null) {
+ const descriptions={
+ wellBelow:['Pay is well below the sample daily benchmark. Ask why and discuss the rate.','मज़दूरी नमूना दैनिक दर से बहुत कम है। कारण और दर पर बात करें।'],
+ below:['Pay is below the sample daily benchmark. Discuss the rate.','मज़दूरी नमूना दैनिक दर से कम है। दर पर बात करें।'],
+ near:['Pay is near the sample daily benchmark. This does not establish a legal wage or guarantee payment.','मज़दूरी नमूना दैनिक दर के पास है। इससे कानूनी दर या भुगतान की गारंटी तय नहीं होती।'],
+ above:['Pay is above the sample daily benchmark. Confirm the scope and payment timing.','मज़दूरी नमूना दैनिक दर से अधिक है। काम और भुगतान का समय पूछें।'],
+ wellAbove:['Pay is far above the sample benchmark. Independently confirm the offer; the amount alone does not prove fraud.','रकम नमूना दर से बहुत अधिक है। प्रस्ताव की अलग से पुष्टि करें; रकम अकेले धोखाधड़ी साबित नहीं करती।'],
+ }
+ add('pay',band==='near'||band==='above'?'fair':'risk',band==='wellBelow'||band==='wellAbove'?2:1,...descriptions[band])
+ }
+ if(hours===null) add('hours','risk',1,'Working hours are unknown. Ask for start, finish, breaks and any additional pay.','काम के घंटे अज्ञात हैं। शुरुआत, समाप्ति, आराम और अतिरिक्त भुगतान पूछें।')
+ else if(hours>9) add('hours','risk',1,'This is a long working day. Ask about breaks, extra hours and the applicable overtime rules.','काम का दिन लंबा है। आराम, अतिरिक्त घंटे और लागू ओवरटाइम नियम पूछें।')
+ else add('hours','fair',1,'Hours are stated. Confirm breaks and any extra hours in writing.','घंटे दिए गए हैं। आराम और अतिरिक्त घंटे लिखित में तय करें।')
+ if(['daily','weekly','monthly'].includes(o.payday)) add('payday','fair',1,'Payment timing is stated; ask for the exact date and method.','भुगतान का समय दिया है; सही तारीख और तरीका पूछें।')
+ else add('payday','risk',1,'Payment timing needs clarification. Ask for a date and interim payments.','भुगतान का समय साफ़ करें। तारीख और बीच के भुगतान पूछें।')
+ for(const [id,en,hi] of [['address','Site address','काम का पता'],['written','Written terms','लिखित शर्तें'],['verified','Verification assumption','जाँच का अनुमान']]) {
+ if(known(o[id])) add(id,'fair',1,`${en}: supplied. Check the underlying evidence.`,`${hi}: दिया गया। संबंधित प्रमाण जाँचें।`)
+ else add(id,'risk',id==='address'?2:1,`${en}: ${unknown(o[id])?'unknown':'not supplied'}. Ask before committing.`,`${hi}: ${unknown(o[id])?'अज्ञात':'नहीं दिया'}। तय करने से पहले पूछें।`)
+ }
+ if(fee>0) add('fee','risk',5,'An upfront fee is a serious warning. Do not transfer money; independently check the employer and terms.','पहले फ़ीस माँगना गंभीर चेतावनी है। पैसे न भेजें; नियोक्ता और शर्तों की स्वतंत्र जाँच करें।')
+ else if(fee===null) add('fee','risk',1,'Fees are unknown. Ask whether any payment or deduction is required.','फ़ीस अज्ञात है। कोई भुगतान या कटौती है या नहीं, पूछें।')
+ else add('fee','fair',1,'No upfront fee is stated. Confirm there are no unexpected deductions.','पहले फ़ीस नहीं बताई गई। अनजानी कटौती नहीं है, पुष्टि करें।')
+ const fair=tokens.filter(t=>t.side==='fair').reduce((a,t)=>a+t.w,0), risk=tokens.filter(t=>t.side==='risk').reduce((a,t)=>a+t.w,0)
+ const hardWarning=fee>0
+ const tone=Object.keys(errors).length?'invalid':hardWarning?'bad':risk?'mid':'good'
+ const labels={invalid:['Check the inputs','जानकारी जाँचें'],bad:['Serious warning','गंभीर चेतावनी'],mid:['Questions to ask','पूछने के सवाल'],good:['Clearer terms','अधिक स्पष्ट शर्तें']}
+ return {errors,valid:!Object.keys(errors).length,tokens,fair,risk,hardWarning,band,reference:ref,verdict:{tone,word:labels[tone][0],hi:labels[tone][1],line:'This checks stated terms only; it cannot guarantee safety or payment.',lineHi:'यह केवल बताई शर्तें जाँचता है; सुरक्षा या भुगतान की गारंटी नहीं है।'}}
+}
+export { matchSchemes, SCHEMES } from '../domain/schemes.js'

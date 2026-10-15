@@ -1,3 +1,6 @@
+import SceneBoundary from '../ui/SceneBoundary.jsx'
+import FrameBudget from '../ui/FrameBudget.jsx'
+import {useI18n} from '../i18n/index.jsx'
 // The hall's DOM layer: a tall scroll track with a sticky stage holding the
 // WebGL gallery and the copy. One rAF loop reads the scroll and writes `hall`
 // plus a few styles directly; React state only changes when a chapter, hover
@@ -14,6 +17,7 @@ import { T, chapterAt, clamp, hall, span } from './hall.js'
 import { CardTool, JobsTool, OfferTool, Record, RightsTool } from './tools.jsx'
 import { agora } from '../agora/state.js'
 import Listen from '../ui/Listen.jsx'
+import { throwOne } from './exhibits/Offerings.jsx'
 
 const NUMERALS = ['Α', 'Β', 'Γ', 'Δ']
 
@@ -23,7 +27,7 @@ const CHAPTERS = [
     god: 'Hermes',
     emblem: '/art/gods/hermes.jpg',
     kicker: 'Find work',
-    title: <>Work nearby.<br />Pay up front.</>,
+    title: <>Work nearby.<br />Terms up front.</>,
     hi: 'आस-पास का काम, मज़दूरी पहले से तय।',
     body: 'Daily, weekly and longer jobs near the naka you already stand at. Pay, hours and distance come first, before anything else.',
     say: [['आस-पास का काम, मज़दूरी पहले से तय। दूरी, समय और रोज़ की मज़दूरी सबसे पहले दिखती है।', 'hi-IN']],
@@ -36,7 +40,7 @@ const CHAPTERS = [
     kicker: 'Show your skill',
     title: <>Your hands<br />are the résumé.</>,
     hi: 'आपके हाथ ही आपका बायोडाटा हैं।',
-    body: 'No forms, no certificates. Choose your trade, say what you do, add a photo of real work. Every employer who hires you through Ergon can vouch for the job.',
+    body: 'No forms, no certificates. Choose your trade, say what you do, add a photo of real work. Your draft stays on this device. Preview it on the bronze tablet and download it.',
     say: [['आपके हाथ ही आपका बायोडाटा हैं। अपनी भाषा में बोलिए, अपने काम की फ़ोटो जोड़िए।', 'hi-IN']],
     tool: <CardTool />,
   },
@@ -65,14 +69,22 @@ const CHAPTERS = [
 ]
 
 export default function VaseHall() {
+  const {t,lang}=useI18n()
+  const [expanded,setExpanded]=useState(-1)
+  const [reduced,setReduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useEffect(()=>{const m=matchMedia('(prefers-reduced-motion: reduce)');const changed=()=>setReduced(m.matches);m.addEventListener('change',changed);return()=>m.removeEventListener('change',changed)},[])
   const sec = useRef()
   const stage = useRef()
   const gl = useRef()
   const tip = useRef()
   const [active, setActive] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => { if(active) setLoaded(true) }, [active])
   const [chapter, setChapter] = useState(-1)
   const [hover, setHover] = useState(-1)
   const [selected, setSelected] = useState(-1)
+  const recordOpener=useRef(null)
+  useEffect(()=>{if(selected>=0){recordOpener.current=document.activeElement;requestAnimationFrame(()=>stage.current?.querySelector('.drawer-close')?.focus({preventScroll:true}))}else if(recordOpener.current?.isConnected){recordOpener.current.focus({preventScroll:true});recordOpener.current=null}},[selected])
 
   useEffect(() => {
     hall.onHover = setHover
@@ -108,7 +120,7 @@ export default function VaseHall() {
       const p = clamp(-r.top / Math.max(1, r.height - vh), 0, 1)
       hall.p = p
       hall.vh = vh
-      const on = r.top < vh && r.bottom > 0
+      const on = !document.hidden && r.top < vh && r.bottom > 0
       if (on !== lastActive) {
         lastActive = on
         hall.active = on
@@ -118,7 +130,9 @@ export default function VaseHall() {
       if (!on) return
 
       for (const f of fades) {
-        const a = Math.round(span(p, f.a, f.b) * 1000) / 1000
+        const editing=f.el.contains(document.activeElement) && document.activeElement.matches('input, textarea, select')
+        const a = f.el.classList.contains('expanded') || editing ? 1 : Math.round(span(p, f.a, f.b) * 1000) / 1000
+        f.el.inert = a <= 0.5
         if (a === f.last) continue
         f.last = a
         f.el.style.opacity = a
@@ -188,31 +202,53 @@ export default function VaseHall() {
     }
   }, [])
 
+  // Browse the frieze one figure at a time.
+  const stepFigure = (dir) => {
+    const n = FIGURES.length
+    const i = selected < 0 ? (dir > 0 ? 0 : n - 1) : (selected + dir + n) % n
+    hall.onSelect?.(i)
+  }
+  useEffect(() => {
+    const key = (e) => {
+      if (!hall.active || hall.p < T.kept[1] || e.target.closest?.('input, select, textarea')) return
+      if (e.key === 'ArrowRight') stepFigure(1)
+      else if (e.key === 'ArrowLeft') stepFigure(-1)
+      else if (e.key === 'Escape') {hall.onSelect?.(-1);setExpanded(-1)}
+      else return
+      e.preventDefault()
+    }
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
+  })
+
   const goTo = (p) => {
     const r = sec.current.getBoundingClientRect()
     const top = window.scrollY + r.top
-    window.scrollTo({ top: top + p * (r.height - window.innerHeight), behavior: 'smooth' })
+    window.scrollTo({ top: top + p * (r.height - window.innerHeight), behavior: 'instant' })
   }
 
   const hf = hover >= 0 ? FIGURES[hover] : null
   const sel = selected >= 0 ? FIGURES[selected] : null
 
   return (
-    <section id="record" className="hall" ref={sec} aria-label="Ergon, told on a vase">
-      {[['work', T.chapters[0][0] + 0.05], ['rights', T.chapters[3][0] + 0.05], ['coda', T.coda[0] + 0.04]].map(([id, p]) => (
+    <section id="record" className={`hall ${reduced ? "static-hall" : ""}`} ref={sec} aria-label="Ergon, told on a vase">
+      {[['work', T.chapters[0][0] + 0.05], ['craft', T.chapters[1][0] + 0.05], ['trust', T.chapters[2][0] + 0.05], ['rights', T.chapters[3][0] + 0.05], ['coda', T.coda[0] + 0.04]].map(([id, p]) => (
         <span key={id} id={id} className="hall-anchor" style={{ top: `calc(${p} * (100% - 100vh))` }} />
       ))}
       <div className={`hall-stage ${hover >= 0 ? 'pointing' : ''}`} ref={stage}>
         <div className="hall-gl" ref={gl} aria-hidden="true">
-          <Canvas
+          <SceneBoundary fallback={<img className="gallery-fallback" src="/art/wall.jpg" alt="Painted Greek gallery"/>}>
+          {loaded && !reduced && <Canvas
             shadows
-            dpr={[1, 1.75]}
-            frameloop={active ? 'always' : 'never'}
+            dpr={[1, 1.25]}
+            frameloop="demand"
             camera={{ fov: 30, near: 0.1, far: 80, position: [0, 8.8, 2.4] }}
-            gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }}
+            gl={{ antialias: false, powerPreference: 'default', stencil: false }}
           >
+            <FrameBudget active={active} />
             <VaseScene />
-          </Canvas>
+          </Canvas>}
+          </SceneBoundary>
         </div>
 
         {/* Descent captions */}
@@ -239,16 +275,17 @@ export default function VaseHall() {
         </div>
 
         {CHAPTERS.map((c, i) => (
-          <article key={c.kicker} className={`panel ${c.side}`} data-a={T.chapters[i][0] + 0.01} data-b={T.chapters[i][1] - 0.004}>
+          <article key={c.kicker} className={`panel ${c.side} ${expanded===i?"expanded":""}`} data-a={T.chapters[i][0] + 0.01} data-b={T.chapters[i][1] - 0.004}>
             <p className="panel-kicker">
               <span className="medallion" aria-hidden="true">
                 <img src={c.emblem} alt="" />
               </span>
               <span className="numeral">{NUMERALS[i]}</span>
-              {c.kicker}
+              {t(['work','craft','trust','rights'][i])}
               <span className="panel-god">· kept by {c.god}</span>
             </p>
-            <h2 className="panel-title">{c.title}</h2>
+            <h2 className="panel-title">{lang==='hi'?c.hi:c.title}</h2>
+            <button className="link expand-tool" aria-expanded={expanded===i} onClick={()=>setExpanded(expanded===i?-1:i)}>{expanded===i?(lang==='hi'?'वापस फूलदान पर':'Return to the vase'):(lang==='hi'?'साधन बड़ा करें':'Expand this tool')}</button>
             <p className="panel-hi" lang="hi">{c.hi}</p>
             <p className="panel-body">{c.body}</p>
             <Listen lines={c.say} />
@@ -260,23 +297,52 @@ export default function VaseHall() {
           <h2 className="coda-title">Every day of work,<br />kept.</h2>
           <p className="coda-sub">Turn the vase. Touch a worker to open their record, or tap the gallery to throw your own day of work into it.</p>
           <div className="coda-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => throwOne()}>Throw a day of work</button>
             <button type="button" className="btn btn-clay" onClick={() => agora.show('all')}>I’m looking for work</button>
-            <button type="button" className="btn btn-ghost" onClick={() => agora.show('all')}>I need someone</button>
+            <a className="btn btn-ghost" href="#trust">Check an offer</a>
           </div>
         </div>
 
-        <nav className="rail" aria-label="Chapters" data-a={T.chapters[0][0] - 0.01} data-b={T.coda[0] + 0.02}>
+        <nav className="rail" aria-label="Chapters" data-a={0.001} data-b={T.coda[0] + 0.02}>
           {NUMERALS.map((n, i) => (
-            <button key={n} type="button" className={chapter === i ? 'on' : ''} onClick={() => goTo(T.chapters[i][0] + 0.05)} aria-label={`Chapter ${n}: ${CHAPTERS[i].kicker}`}>
+            <button key={n} type="button" className={chapter === i ? 'on' : ''} aria-current={chapter === i ? 'step' : undefined} onClick={() => goTo(T.chapters[i][0] + 0.05)} aria-label={`Chapter ${n}: ${CHAPTERS[i].kicker}`}>
               <span>{n}</span>
-              <em>{CHAPTERS[i].kicker}</em>
+              <em>{t(['work','craft','trust','rights'][i])}</em>
             </button>
           ))}
         </nav>
 
-        <p className="drag-hint" data-a={T.kept[1]} data-b={1.2}>
-          <span aria-hidden="true">⟲</span> Drag to turn · Touch a figure
-        </p>
+        {/* The frieze, as a strip you can browse: every figure is a record. */}
+        <nav className="frieze-nav" data-a={T.kept[1] - 0.01} data-b={1.2} aria-label="Figures on the frieze">
+          <button type="button" className="fn-step" onClick={() => stepFigure(-1)} aria-label="Previous figure">
+            ‹
+          </button>
+          {FIGURES.map((f, i) => (
+            <button
+              key={f.id}
+              type="button"
+              className={`fn-fig ${selected === i ? 'on' : ''}`}
+              onClick={() => hall.onSelect?.(selected === i ? -1 : i)}
+              onPointerEnter={() => {
+                hall.hover = i
+                setHover(i)
+              }}
+              onPointerLeave={() => {
+                hall.hover = -1
+                setHover(-1)
+              }}
+              aria-label={`${f.trade}: open record`}
+              aria-pressed={selected === i}
+            >
+              <span className="fn-disc" style={{ backgroundImage: `url(${f.src})` }} />
+              <em>{f.trade}</em>
+            </button>
+          ))}
+          <button type="button" className="fn-step" onClick={() => stepFigure(1)} aria-label="Next figure">
+            ›
+          </button>
+          <span className="fn-hint">Drag the vase to turn it · ← → to browse</span>
+        </nav>
 
         <div className={`tip ${hf && !sel ? 'show' : ''}`} ref={tip} aria-hidden="true">
           {hf && (
@@ -295,7 +361,7 @@ export default function VaseHall() {
               <p className="drawer-kicker">From the frieze</p>
               <Record id={sel.id} onMap />
               <div className="drawer-actions">
-                <button type="button" className="btn btn-clay btn-sm" onClick={() => agora.show('all')}>{sel.id === 'sisyphus' ? 'Offer him a day off' : 'Hire for tomorrow'}</button>
+                <button type="button" className="btn btn-clay btn-sm" onClick={() => agora.show('all')}>View sample work nearby</button>
                 <Listen
                   label="Listen"
                   lines={[[`${RECORDS[sel.id].name}. ${RECORDS[sel.id].trade}. ${RECORDS[sel.id].years}. ${RECORDS[sel.id].note}`, 'en-IN']]}

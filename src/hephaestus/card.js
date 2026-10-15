@@ -138,7 +138,7 @@ export function drawCard(c, s) {
   g.textAlign = 'left'
   let size = 112
   g.font = `600 ${size}px ${SERIF}`
-  while (g.measureText(s.name || 'Your name').width > 860 && size > 60) g.font = `600 ${(size -= 6)}px ${SERIF}`
+  while (g.measureText(s.name || 'Your name').width > 860 && size > 24) g.font = `600 ${(size -= 6)}px ${SERIF}`
   emboss(g, () => g.fillText(s.name || 'Your name', 110, 330))
   g.font = `italic 500 58px ${SERIF}`
   emboss(g, () => g.fillText(`${s.tradeLabel || 'Your trade'}${s.years ? ` · ${s.years} ${s.years === 1 ? 'year' : 'years'}` : ''}`, 112, 410), '#f0cf98')
@@ -147,12 +147,17 @@ export function drawCard(c, s) {
   emboss(g, () => g.fillText('SKILLS', 112, 500), 'rgba(246,223,178,0.7)')
   g.font = `500 40px ${SERIF}`
   const skills = s.skills.length ? s.skills.join('  ·  ') : 'Choose what you do best'
-  wrap(g, skills, 900).slice(0, 2).forEach((l, i) => emboss(g, () => g.fillText(l, 112, 556 + i * 52)))
+  let skillLines=wrap(g, skills, 850)
+  let skillSize=40
+  while(skillLines.length>2 && skillSize>20){ g.font=`500 ${--skillSize}px ${SERIF}`;skillLines=wrap(g,skills,850) }
+  skillLines.forEach((l,i)=>emboss(g,()=>g.fillText(l,112,556+i*45)))
 
   g.font = `600 22px ${SANS}`
   emboss(g, () => g.fillText('SPEAKS', 112, 690), 'rgba(246,223,178,0.7)')
   g.font = `500 40px ${SERIF}`
-  emboss(g, () => g.fillText(s.langs.length ? s.langs.join('  ·  ') : '—', 112, 744))
+  g.font = `500 30px ${SERIF}`
+  const languageLines=wrap(g,s.langs.length?s.langs.join(' · '):'—',850)
+  languageLines.forEach((l,i)=>emboss(g,()=>g.fillText(l,112,730+i*34)))
 
   // Photos of real work, set into the bronze.
   s.photos.slice(0, 3).forEach((p, i) => {
@@ -174,9 +179,9 @@ export function drawCard(c, s) {
   // Seal: how this record was made.
   g.textAlign = 'center'
   g.font = `600 24px ${SANS}`
-  const lines = [s.voice ? 'VOICE INTRO ✓' : 'NO VOICE INTRO YET', `${s.photos.length} PHOTO${s.photos.length === 1 ? '' : 'S'} OF WORK`, 'VOUCHES APPEAR AFTER EACH JOB']
-  lines.forEach((l, i) => emboss(g, () => spaced(g, l, 1230, 740 + i * 44, 3), 'rgba(246,223,178,0.8)'))
-  g.font = `italic 500 34px ${SERIF}`
+  const lines = ['SELF-DESCRIBED SKILL', `${s.photos.length} PHOTO${s.photos.length === 1 ? '' : 'S'} OF WORK`, 'NO VERIFIED ENDORSEMENTS']
+  lines.forEach((l, i) => emboss(g, () => spaced(g, l, 1230, 740 + i * 44, 1), 'rgba(246,223,178,0.8)'))
+  g.font = `italic 500 24px ${SERIF}`
   emboss(g, () => g.fillText(s.forged ? `Set in bronze · ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}` : 'Still on the anvil', 1230, 916), '#f0cf98')
   g.textAlign = 'left'
 }

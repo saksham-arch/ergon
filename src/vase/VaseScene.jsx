@@ -1,3 +1,4 @@
+import InheritedGallery from '../world/InheritedGallery.jsx'
 // The hall: one amphora on a plinth in a dark gallery, lit from above. It is
 // the site's second act. Boulders fall into it, its frieze paints itself in,
 // a glass case lowers and lifts, and the four chapters turn it to face you.
@@ -25,8 +26,10 @@ import {
 import { FIGURES } from './data.js'
 import { FACE, T, clamp, hall, mix, smooth } from './hall.js'
 import { paintVase } from './paint.js'
-import { MOUTH_R, MOUTH_Y, PROFILE } from './profile.js'
+import { MOUTH_R, MOUTH_Y, PROFILE, rAtY } from './profile.js'
 import Stoa from './exhibits/Stoa.jsx'
+import Caduceus from './exhibits/Caduceus.jsx'
+import Owl from './exhibits/Owl.jsx'
 import Balance from './exhibits/Balance.jsx'
 import Tablet from './exhibits/Tablet.jsx'
 import Offerings from './exhibits/Offerings.jsx'
@@ -282,9 +285,34 @@ function Vase() {
   })
 
   const handleRot = (896 / 4096) * TAU - Math.PI / 2
+  const spots = useRef([])
+  useFrame((s) => {
+    if (!hall.ranges) return
+    const t = s.clock.elapsedTime
+    // Only once the frieze is painted, and not over the figure already open.
+    const on = hall.p > T.kept[1] - 0.02
+    hall.ranges.forEach(([a, b], i) => {
+      const m = spots.current[i]
+      if (!m) return
+      const phi = ((a + b) / 2) * TAU
+      const r = rAtY(1.84) + 0.03
+      m.position.set(Math.sin(phi) * r, 1.84, Math.cos(phi) * r)
+      m.lookAt(Math.sin(phi) * 10, 1.84, Math.cos(phi) * 10)
+      const k = i === hall.hover ? 1.6 : 1
+      m.scale.setScalar((0.055 + Math.sin(t * 2.4 + i) * 0.012) * k)
+      m.visible = on && hall.selected !== i
+      m.material.opacity = 0.55 + Math.sin(t * 2.4 + i) * 0.25
+    })
+  })
 
   return (
     <group ref={group}>
+      {FIGURES.map((f, i) => (
+        <mesh key={f.id} ref={(el) => (spots.current[i] = el)} visible={false} renderOrder={7}>
+          <ringGeometry args={[0.55, 1, 40]} />
+          <meshBasicMaterial color="#ffd08a" transparent opacity={0.6} depthWrite={false} blending={AdditiveBlending} toneMapped={false} />
+        </mesh>
+      ))}
       <mesh
         geometry={geo}
         material={m}
@@ -339,7 +367,7 @@ function Boulders({ envMap }) {
         const a = (i * 2.399) % TAU
         const d = 1.2 + ((i * 0.618) % 1) * 2.2
         return {
-          from: new Vector3(Math.cos(a) * d, 10 + ((i * 0.37) % 1) * 4, Math.sin(a) * d),
+          from: new Vector3(Math.cos(a) * d * 0.8, 6.2 + ((i * 0.37) % 1) * 1.4, Math.sin(a) * d * 0.55 - 0.3),
           to: new Vector3(Math.cos(a * 3) * 0.12, MOUTH_Y, Math.sin(a * 3) * 0.12),
           r: 0.2 + ((i * 0.53) % 1) * 0.16,
           spin: new Vector3(((i * 0.71) % 1) - 0.5, 1, ((i * 0.29) % 1) - 0.5).normalize(),
@@ -488,9 +516,11 @@ function Vitrine() {
     const p = hall.p
     const down = smooth(T.kept[0], T.kept[0] + 0.045, p)
     const up = smooth(T.kept[1] - 0.025, T.kept[1] + 0.03, p)
-    const y = (1 - down) * 6 + up * 7
+    const y = (1 - down) * 8 + up * 8
     ref.current.position.y = y
-    ref.current.visible = y < 6.5
+    // Hidden while it's up: during the descent the camera looks down
+    // through the space it would hang in.
+    ref.current.visible = y < 7.4
   })
   return (
     <group ref={ref} visible={false}>
@@ -598,7 +628,7 @@ const dustFrag = /* glsl */ `
   void main() {
     float d = length(gl_PointCoord - 0.5);
     float a = smoothstep(0.5, 0.0, d) * vA;
-    gl_FragColor = vec4(vec3(1.0, 0.82, 0.6) * a * 0.9, 1.0);
+    gl_FragColor = vec4(vec3(1.0, 0.82, 0.6) * a * 0.32, 1.0);
   }
 `
 
@@ -622,10 +652,12 @@ function Dust() {
     g.setAttribute('aSeed', new BufferAttribute(seed, 1))
     return g
   }, [])
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uScale: { value: 300 } }), [])
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uScale: { value: 4 } }), [])
   useFrame((s) => {
-    uniforms.uTime.value = s.clock.elapsedTime
-    uniforms.uScale.value = (size.height * viewport.dpr) / 200
+    // Write to the material's live uniforms; R3F keeps its own copy.
+    const u = ref.current?.material.uniforms ?? uniforms
+    u.uTime.value = s.clock.elapsedTime
+    u.uScale.value = (size.height * viewport.dpr) / 200
   })
   return (
     <points ref={ref} geometry={geo} renderOrder={6}>
@@ -664,7 +696,7 @@ const SHOTS = [
 
 function Rig() {
   const { camera, size } = useThree()
-  const tmp = useMemo(() => ({ pos: new Vector3(), at: new Vector3(), look: new Vector3(0, 2, 0), cur: null }), [])
+  const tmp = useMemo(() => ({ pos: new Vector3(), at: new Vector3(), look: new Vector3(0, 2, 0), cur: null, focus: 0 }), [])
   useFrame((_, dt) => {
     const p = hall.p
     let k = SHOTS.length - 2
@@ -692,6 +724,16 @@ function Rig() {
       tmp.at.y -= 0.9
     }
 
+    // Choosing a figure brings the camera in to the frieze, the vase a little
+    // left so the record beside it doesn't cover the figure.
+    tmp.focus += ((hall.selected >= 0 ? 1 : 0) - tmp.focus) * (1 - Math.exp(-dt * 3))
+    if (tmp.focus > 0.001) {
+      const f = tmp.focus * tmp.focus * (3 - 2 * tmp.focus)
+      const side = aspect < 0.95 ? 0 : 1.15
+      tmp.pos.lerp(new Vector3(side, 1.62, aspect < 0.95 ? 7.2 : 5.3), f)
+      tmp.at.lerp(new Vector3(side, 1.5, 0), f)
+    }
+
     // A little parallax from the pointer.
     const ptr = hall.pointer
     tmp.pos.x += ptr.nx * 0.28
@@ -706,6 +748,10 @@ function Rig() {
     camera.position.lerp(tmp.pos, s)
     tmp.look.lerp(tmp.at, s)
     camera.lookAt(tmp.look)
+    camera.updateMatrixWorld()
+    tmp.at.set(0, MOUTH_Y, 0).project(camera)
+    const rect = document.querySelector('.hall-gl')?.getBoundingClientRect()
+    hall.mouth = { x: (tmp.at.x + 1) * size.width / 2 + (rect?.left ?? 0), y: (1 - tmp.at.y) * size.height / 2 + (rect?.top ?? 0) }
   })
   return null
 }
@@ -726,7 +772,8 @@ function CursorLight() {
 
 export default function VaseScene() {
   // A live capture of the gallery for everything chrome.
-  const { texture: gallery } = useGalleryEnv({ size: 256, every: 4 })
+  const compact = useThree((state) => state.size.width < 860)
+  const { texture: gallery } = useGalleryEnv({ size: 128, every: 60 })
 
   return (
     <>
@@ -750,7 +797,7 @@ export default function VaseScene() {
         distance={30}
         color="#ffe1c0"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-bias={-0.0004}
         shadow-normalBias={0.02}
       />
@@ -758,9 +805,12 @@ export default function VaseScene() {
       <CursorLight />
 
       <Stoa />
+      <InheritedGallery />
       <Vase />
       <Boulders envMap={gallery} />
       <Offerings envMap={gallery} />
+      <Caduceus />
+      <Owl />
       <Balance />
       <Tablet />
       <Exodus />
@@ -772,8 +822,8 @@ export default function VaseScene() {
       <Dust />
       <Rig />
 
-      <EffectComposer multisampling={4}>
-        <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.82} luminanceSmoothing={0.25} />
+      <EffectComposer multisampling={compact ? 0 : 2}>
+        <Bloom mipmapBlur intensity={0.5} luminanceThreshold={0.9} luminanceSmoothing={0.2} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.28} darkness={0.72} />
         <Noise opacity={0.035} />

@@ -160,8 +160,10 @@ export default function Stoa() {
     const reveal = smooth(T.kept[0], T.kept[0] + 0.06, hall.p)
     // Hiding the ceiling also keeps the opening overhead camera unobstructed.
     root.current.visible = hall.active && hall.p >= 0.18
-    uniforms.uOpacity.value = 0.08 * reveal
-    if (hall.active && !reduced.current) uniforms.uTime.value += Math.min(dt, 0.1)
+    // Write to the live material's uniforms; R3F keeps its own copy.
+    const u = rays.current?.material.uniforms ?? uniforms
+    u.uOpacity.value = 0.08 * reveal
+    if (hall.active && !reduced.current) u.uTime.value += Math.min(dt, 0.1)
     wall.current.color.copy(tint.dark).lerp(tint.lit, reveal)
     glow.current.emissiveIntensity = mix(0, 0.55, reveal)
     glow.current.color.setScalar(reveal * 0.18)

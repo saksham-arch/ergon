@@ -1,11 +1,10 @@
-// A small bridge so the rest of the world can send the reader into the agora
-// with a trade already chosen (a figure on the vase, chapter Α's button).
+import { jobStore } from '../domain/jobs.js'
 export const agora = {
-  trade: 'all',
-  setTrade: null,
-  show(trade = 'all') {
-    agora.trade = trade
+  trade:'all', setTrade:null,
+  show(trade='all') {
+    jobStore.set(s=>({...s,trade,selected:null}))
+    agora.trade=trade
     agora.setTrade?.(trade)
-    document.getElementById('agora')?.scrollIntoView({ behavior: 'smooth' })
+    location.hash = '#map'
   },
 }

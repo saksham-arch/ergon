@@ -56,13 +56,17 @@ function meElement() {
 
 export default function Agora() {
   const box = useRef()
+  const sec = useRef()
+  const dawn = useRef()
+  const head = useRef()
   const mapRef = useRef()
   const layerRef = useRef()
   const meRef = useRef()
   const stateRef = useRef()
+  const [nearby, setNearby] = useState(false)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [anchor, setAnchor] = useState(ANDHERI)
+  const [anchor] = useState(ANDHERI)
   const [me, setMe] = useState([ANDHERI[0] + kmToLng(-0.45, ANDHERI[1]), ANDHERI[1] + kmToLat(-0.22)])
   const [trade, setTrade] = useState(agora.trade)
   const [kind, setKind] = useState('all')
@@ -96,10 +100,24 @@ export default function Agora() {
   )
   const list = jobs.filter((j) => j.open).sort((a, b) => a.dist - b.dist)
   const sel = jobs.find((j) => j.id === selected)
-  stateRef.current = { jobs, selected, hover, sent }
+  stateRef.current = { ...stateRef.current, jobs, selected, hover, sent, me }
 
-  // The map, once.
   useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      stateRef.current.active = entry.isIntersecting
+      if (entry.isIntersecting) {
+        setNearby(true)
+        mapRef.current?.resize()
+        mapRef.current?.triggerRepaint()
+      }
+    }, { rootMargin: '300px' })
+    observer.observe(sec.current)
+    return () => observer.disconnect()
+  }, [])
+
+  // Start the map as the city approaches, rather than during the climb.
+  useEffect(() => {
+    if (!nearby) return
     let map
     try {
       map = new maplibregl.Map({
@@ -120,8 +138,12 @@ export default function Agora() {
     mapRef.current = map
     if (import.meta.env.DEV) window.__agora = map
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
-    map.on('error', (e) => console.warn('[agora]', e?.error?.message || e))
+    map.on('error', (e) => {
+      if (!map.isStyleLoaded()) setFailed(true)
+      console.warn('[agora]', e?.error?.message || e)
+    })
     map.on('load', () => {
+      setFailed(false)
       try {
         greekify(map)
       } catch (err) {
@@ -153,7 +175,7 @@ export default function Agora() {
       const h = layer.screenHeight()
       let best = null
       let bestD = 30
-      for (const j of stateRef.current.jobs) {
+      for (const j of stateRef.current.jobs.filter((job) => job.open)) {
         const b = map.project(j.lngLat)
         const hx = b.x
         const hy = b.y - h * 0.85
@@ -182,8 +204,53 @@ export default function Agora() {
         map.easeTo({ center: j.lngLat, duration: 900, offset: [140, 80], zoom: Math.max(map.getZoom(), 14.8) })
       }
     })
-    return () => map.remove()
+    return () => { map.remove(); mapRef.current = null }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearby])
+
+  // Scrolling into the agora flies the camera down from above the city to
+  // street level; after that the map is yours to move.
+  useEffect(() => {
+    let raf = 0
+    let last = -1
+    const smooth = (a, b, v) => {
+      const t = Math.min(1, Math.max(0, (v - a) / (b - a)))
+      return t * t * (3 - 2 * t)
+    }
+    const mix = (a, b, t) => a + (b - a) * t
+    const loop = () => {
+      raf = requestAnimationFrame(loop)
+      const el = sec.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      const vh = window.innerHeight
+      if (r.top > vh || r.bottom < 0) return
+      const q = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - vh)))
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const d = reduced ? 1 : smooth(0.04, 0.62, q)
+      if (dawn.current) dawn.current.style.opacity = (1 - smooth(0, 0.3, q)).toFixed(3)
+      if (head.current) {
+        const h = 1 - smooth(0.26, 0.5, q)
+        head.current.style.opacity = h.toFixed(3)
+        head.current.style.transform = `translate3d(0, ${(-(1 - h) * 40).toFixed(1)}px, 0)`
+      }
+      const ui = smooth(0.55, 0.78, q)
+      el.style.setProperty('--ui', ui.toFixed(3))
+      el.classList.toggle('ui-on', ui > 0.5)
+      const map = mapRef.current
+      if (map && Math.abs(q - last) > 0.0004 && (d < 0.999 || last < 0.62)) {
+        const m = stateRef.current.me ?? ANDHERI
+        map.jumpTo({
+          center: [m[0] + mix(0.02, 0.004, d), m[1] + mix(-0.035, -0.002, d)],
+          zoom: mix(11.4, 14.4, d),
+          pitch: mix(0, 60, d),
+          bearing: mix(32, -24, d),
+        })
+      }
+      last = q
+    }
+    loop()
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   // Keep the ring and the figure in step with state.
@@ -199,7 +266,6 @@ export default function Agora() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = [pos.coords.longitude, pos.coords.latitude]
-        setAnchor([p[0] + kmToLng(0.45, p[1]), p[1] + kmToLat(0.22)])
         setMe(p)
         setGeo('here')
         mapRef.current?.flyTo({ center: p, zoom: 14.6, pitch: 60, duration: 2200 })
@@ -215,29 +281,31 @@ export default function Agora() {
     layerRef.current?.send(me, j)
   }
 
-  const walk = (d) => `${d.toFixed(1)} km · ${Math.max(2, Math.round((d / 4.5) * 60))} min on foot`
+  const walk = (d) => `${d.toFixed(1)} km · ${Math.max(2, Math.round((d / 4.5) * 60))} min estimated walk`
 
   return (
-    <section className="agora" id="agora" aria-labelledby="agora-title">
-      <header className="agora-head">
-        <p className="agora-kicker">
-          <img src="/art/gods/hermes.jpg" alt="" aria-hidden="true" />
-          The agora · kept by Hermes
-        </p>
-        <h2 id="agora-title" className="agora-title">
-          Every flower is a day’s work, <span>waiting nearby.</span>
-        </h2>
-        <p className="agora-sub">
-          A real map of the streets around your naka. Drag yourself to where you stand, choose how far you’ll walk, and touch a flower to see the
-          whole offer before you go.
-        </p>
-      </header>
-
+    <section className="agora" id="agora" ref={sec} aria-labelledby="agora-title">
+      <div className="agora-stage">
       <div className="agora-frame">
-        <div className="agora-map" ref={box} aria-label="Map of work nearby" role="application" />
+        <div className="agora-map" ref={box} aria-label="Map of work nearby" role="region" />
+        {/* From a painting of the city at dawn down into the real streets. */}
+        <div className="agora-dawn" ref={dawn} aria-hidden="true" />
+        <header className="agora-head" ref={head}>
+          <p className="agora-kicker">
+            <img src="/art/gods/hermes.jpg" alt="" aria-hidden="true" />
+            The agora · kept by Hermes
+          </p>
+          <h2 id="agora-title" className="agora-title">
+            Every flower is a day’s work, <span>waiting nearby.</span>
+          </h2>
+          <p className="agora-sub">
+            A real map of the streets around your naka. Scroll down into it, drag yourself to where you stand, and touch a flower to see the
+            whole offer before you go.
+          </p>
+        </header>
         {failed && <p className="agora-fail">The map needs WebGL and a network connection. The list beside it still works.</p>}
 
-        <aside className="sheet" aria-label="Work within reach">
+        <aside className="sheet ui" aria-label="Work within reach">
           {!sel ? (
             <>
               <div className="sheet-filters">
@@ -272,6 +340,7 @@ export default function Agora() {
                   </div>
                 </div>
               </div>
+              <p className="sheet-demo">Demo listings · Andheri, Mumbai · no employer is contacted</p>
               <p className="sheet-count">
                 <b>{list.length}</b> {list.length === 1 ? 'job' : 'jobs'} within {km} km
               </p>
@@ -348,7 +417,7 @@ export default function Agora() {
               </p>
               <div className="offer-actions">
                 <button type="button" className={`btn btn-primary ${sent.has(sel.id) ? 'done' : ''}`} onClick={() => send(sel)} disabled={sent.has(sel.id)}>
-                  {sent.has(sel.id) ? 'Word sent · reply by evening' : 'Send word'}
+                  {sent.has(sel.id) ? 'Word sent · demo interest saved' : 'Try sending word'}
                 </button>
                 <Listen
                   label="सुनिए"
@@ -359,10 +428,11 @@ export default function Agora() {
           )}
         </aside>
 
-        <button type="button" className={`locate ${geo}`} onClick={locate}>
+        <button type="button" className={`locate ui ${geo}`} onClick={locate}>
           <span aria-hidden="true" className="locate-dot" />
           {geo === 'asking' ? 'Finding you…' : geo === 'here' ? 'You’re on the map' : geo === 'denied' ? 'Location blocked · drag yourself instead' : 'Use my location'}
         </button>
+      </div>
       </div>
     </section>
   )

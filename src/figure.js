@@ -64,12 +64,10 @@ const ORDER = [
 const STRIDE = 118 // foot travel per step
 const STANCE = 0.6 // share of the cycle a foot spends on the ground
 const CYCLE = STRIDE / STANCE // distance covered per full gait cycle
-const FEET = -26 // centre of the stride, behind the hip: a long lunge
-const HIP_PUSH = 124
+const FEET = -20 // centre of the stride, behind the hip: a long lunge
+const HIP_PUSH = 112
 const HIP_STAND = 146
-// Hip to boulder surface while pushing: far enough that the arms reach out
-// nearly straight, with open space between them and the chest.
-const REACH = 160
+const REACH = 150 // hip to boulder surface while pushing
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const mix = (a, b, t) => a + (b - a) * t
@@ -201,7 +199,7 @@ export function drawFigure(f, { ball, r, standX, strain, opacity, dt }) {
   // Lean into the slope, harder while the boulder slips.
   const slopeAng = Math.atan(-slope(hipX)) // > 0 while climbing
   const breathe = Math.sin(f.t * 2.2)
-  const lean = mix(0.76 + slopeAng * 0.45 + strain * 0.12 + breathe * 0.01, 0.06, relax)
+  const lean = mix(1.02 + slopeAng * 0.5 + strain * 0.1 + breathe * 0.01, 0.06, relax)
   const bob = Math.abs(Math.sin(f.phase * Math.PI * 2)) * 2.5 * (1 - relax)
   const hip = { x: hipX, y: ground(hipX) - mix(HIP_PUSH, HIP_STAND, relax) - bob + breathe * 0.4 }
 

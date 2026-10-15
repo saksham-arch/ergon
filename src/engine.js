@@ -145,13 +145,15 @@ export function measure() {
 
   e.vw = root.clientWidth
   e.vh = window.innerHeight
-  e.Sb = clamp(Math.min((1.18 * e.vh) / H0, e.vw / 600), 0.72, 1.35)
+  // While climbing, pull back far enough that the boulder still dominates
+  // but the story cards under the ridge and the ranges behind share the frame.
+  e.Sb = clamp(Math.min((0.92 * e.vh) / H0, e.vw / 720), 0.6, 1.1)
   // The opening shot frames the statue and boulder like a product hero:
   // the pair fills the left of the screen, copy on the right. On narrow
   // screens the copy sits on top and the pair below it.
   const GROUP_W = 640 // back foot to the boulder's far edge, world units
   const GROUP_H = 356
-  const GROUP_C = 150 // the group's centre, this far behind the boulder's
+  const GROUP_C = 140 // the group's centre, this far behind the boulder's
   const wide = e.vw >= 760
   const hs = wide
     ? Math.min((0.58 * e.vw) / GROUP_W, (0.8 * e.vh) / GROUP_H)

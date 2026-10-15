@@ -146,8 +146,8 @@ export function createFlowerLayer({ read, colorOf }) {
   const camera = new Camera()
   const root = new Group()
   scene.add(root)
-  scene.add(new HemisphereLight('#fff4e4', '#8a6a4c', 1.6))
-  scene.add(new AmbientLight('#ffffff', 0.25))
+  scene.add(new HemisphereLight('#fff4e4', '#c9a27a', 1.8))
+  scene.add(new AmbientLight('#ffffff', 0.5))
   const sun = new DirectionalLight('#ffe2bd', 2.2)
   sun.position.set(-0.5, 1, 0.8)
   scene.add(sun)
@@ -209,7 +209,7 @@ export function createFlowerLayer({ read, colorOf }) {
     // Metres per model unit, so a flower stays about the same size on screen
     // at every zoom.
     scaleFor() {
-      return 190 * Math.pow(2, 15 - map.getZoom())
+      return 230 * Math.pow(2, 15 - map.getZoom())
     },
     screenHeight() {
       const mpp = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / Math.pow(2, map.getZoom())
@@ -241,7 +241,7 @@ export function createFlowerLayer({ read, colorOf }) {
         const u = f.mat.userData.u
         const isSel = selected === j.id
         const isHov = hover === j.id
-        const tOpen = !j.open ? 0.05 : isSel ? 1.15 : isHov ? 1.02 : 0.8
+        const tOpen = !j.open ? 0.05 : isSel ? 1.0 : isHov ? 0.94 : 0.8
         u.uOpen.value += (tOpen - u.uOpen.value) * 0.08
         u.uTime.value = now + j.x
         u.uSway.value += ((isSel || isHov ? 1 : 0) - u.uSway.value) * 0.1
@@ -293,7 +293,7 @@ export function createFlowerLayer({ read, colorOf }) {
       camera.projectionMatrix = new Matrix4().fromArray(mm).multiply(l)
       renderer.resetState()
       renderer.render(scene, camera)
-      map.triggerRepaint()
+      if (read().active) map.triggerRepaint()
     },
   }
 }

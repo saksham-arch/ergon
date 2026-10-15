@@ -7,6 +7,7 @@
 // up plays it in reverse, exactly. Screen pixels, y down.
 
 import { CLIMB } from './hill.js'
+import { hall as gallery } from './vase/hall.js'
 
 export const SHARDS = 28
 const SPLIT = 0.46 // timeline point where the boulder bursts
@@ -77,17 +78,20 @@ export function stepDescent({ released, at, vw, vh }) {
   d.active = true
 
   // The mouth of the vase, as the hall's stage slides up into view.
-  d.mouth.x = vw / 2
-  d.mouth.y = hallTop + vh / 2
+  d.mouth.x = gallery.active && gallery.mouth ? gallery.mouth.x : vw / 2
+  d.mouth.y = gallery.active && gallery.mouth ? gallery.mouth.y : hallTop + vh / 2
 
   // The throw: a toss up and over, then a long fall held near the middle of
   // the screen while the hill scrolls away above it.
   const s = d.start
   const toss = smooth(0, 0.12, t)
   const fall = smooth(0.1, SPLIT, t)
-  const peak = Math.min(s.y, vh * 0.62) - vh * 0.16
+  // Forward and a little up, over the far side of the summit and clear of
+  // the title above, then back to the middle as it falls.
+  const peak = Math.min(s.y, vh * 0.66) - vh * 0.08
   const y1 = mix(s.y, peak, toss)
-  d.big.x = mix(s.x, vw / 2, smooth(0, 0.3, t))
+  const ahead = s.x + vw * 0.17
+  d.big.x = mix(mix(s.x, ahead, toss), vw / 2, smooth(0.16, 0.4, t))
   d.big.y = mix(y1, vh * 0.5, fall)
   d.big.r = s.r * (1 + 0.12 * Math.sin(Math.PI * clamp(t / SPLIT, 0, 1)))
   d.big.spin = t * 9

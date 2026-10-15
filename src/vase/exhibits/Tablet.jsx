@@ -81,7 +81,7 @@ export default function Tablet() {
         d.velocity *= Math.exp(-4 * step)
       }
     }
-    root.current.position.y = 1.75 - 3 * (1 - reveal) + Math.sin(t * 0.8) * 0.04 * reveal
+    root.current.position.y = 2.0 - 3 * (1 - reveal) + Math.sin(t * 0.8) * 0.04 * reveal
     root.current.rotation.y = -0.28 + Math.sin(t * 0.45) * 0.06 + d.offset
     slab.current.opacity = reveal
     face.current.opacity = reveal
@@ -93,9 +93,9 @@ export default function Tablet() {
   return (
     <group
       ref={root}
-      position={[2.25, -1.25, 0.4]}
+      position={[1.55, -1.0, 1.7]}
       rotation-y={-0.28}
-      scale={0.72}
+      scale={0.6}
       visible={false}
       onPointerOver={(e) => {
         e.stopPropagation()

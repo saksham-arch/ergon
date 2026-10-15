@@ -21,7 +21,7 @@ export const KINDS = [
   { id: 'long', label: 'Longer work' },
 ]
 
-export const JOBS = [
+const RAW_JOBS = [
   { id: 'j1', trade: 'painter', kind: 'day', title: 'Wall putty and two coats, 2BHK', employer: 'Shah Interiors', verified: true, hires: 23, pay: 900, unit: 'day', hours: '8 am – 5 pm', start: 'Tomorrow', days: '4 days', x: -1.2, z: 0.8, place: 'Andheri East, near the station', bring: 'Roller and scraper. Paint is provided.' },
   { id: 'j2', trade: 'electrician', kind: 'week', title: 'Concealed wiring for a new shop', employer: 'Kapoor Traders', verified: true, hires: 11, pay: 1150, unit: 'day', hours: '9 am – 6 pm', start: 'Monday', days: '6 days', x: 2.4, z: -1.6, place: 'Jogeshwari market road', bring: 'Tester and your own hand tools.' },
   { id: 'j3', trade: 'loading', kind: 'day', title: 'Unloading grain at the wholesale market', employer: 'Patel & Sons', verified: true, hires: 58, pay: 700, unit: 'shift', hours: '10 pm – 4 am', start: 'Tonight', days: '1 night', x: 4.2, z: 3.5, place: 'APMC gate 3', bring: 'Gloves. Tea and a meal at 1 am.' },
@@ -40,5 +40,22 @@ export const JOBS = [
   { id: 'j16', trade: 'helper', kind: 'week', title: 'Shifting a household', employer: 'Swift Movers', verified: true, hires: 29, pay: 800, unit: 'day', hours: '8 am – 6 pm', start: 'Friday', days: '2 days', x: -5.0, z: -0.6, place: 'Pick-up at Gulmohar Society', bring: 'Gloves. Lunch provided.' },
 ]
 
-export const money = (n) => `₹${n.toLocaleString('en-IN')}`
+export const DEMO_DATE = '2026-10-15'
+export const DEMO_ORIGIN = [72.86542, 19.11161]
+const dates = ['2026-10-16','2026-10-19','2026-10-15','2026-10-19','2026-10-15','2026-10-21','2026-10-16','2026-11-01','2026-10-16','2026-10-29','2026-10-15','2026-10-19','2026-10-15','2026-10-17','2026-10-16','2026-10-16']
+const durations = [4,6,1,90,0.5,5,1,null,1,42,0.5,7,6,2,0.5,2]
+const hourCounts = [9,9,6,9,3,9,9,9,7,8,null,8,9,8,null,10]
+const titlesHi = ['दीवार पुट्टी और दो कोट, 2BHK','नई दुकान की छिपी वायरिंग','थोक बाज़ार में अनाज उतारना','तीन मंज़िला इमारत में ईंट का काम','ऊपरी टंकी का रिसाव ठीक करना','अलमारी और दरवाज़े के चौखट','मिश्रण और सामान उठाने में मदद','ऑफ़िस की दिन की सफ़ाई','रिसाव के बाद प्लास्टर मरम्मत','स्कूल की पेंटिंग','इन्वर्टर और दो पंखे','त्योहार में गोदाम पैकिंग','छह फ़्लैट में बाथरूम फ़िटिंग','निर्माण के बाद सफ़ाई','दुकान के शटर चौखट की मरम्मत','घर का सामान शिफ़्ट करना']
+const placesHi = ['अंधेरी पूर्व, स्टेशन के पास','जोगेश्वरी बाज़ार सड़क','APMC गेट 3 (नमूना स्थान)','प्लॉट 14, मंदिर के पीछे','पुल के पास, गली 4','गुलमोहर सोसाइटी, B विंग','प्लॉट 14, मंदिर के पीछे','बिज़नेस पार्क, टावर C','शांति नगर, घर 22','स्टेशन रोड','बाज़ार चौक, दुकान 9','हाइवे सर्विस रोड, हब 2','रिवरसाइड टावर, साइट ऑफ़िस','गुलमोहर सोसाइटी, A विंग','बाज़ार सड़क, दुकान 31','गुलमोहर सोसाइटी से उठाना']
+const bringsHi = ['रोलर और स्क्रेपर। पेंट दिया जाएगा।','टेस्टर और अपने हाथ के औज़ार।','दस्ताने। रात 1 बजे चाय और खाना।','करणी और लेवल। हेलमेट दिया जाएगा।','रिंच सेट और थ्रेड टेप।','ड्रिल और प्लेनर। लकड़ी साइट पर है।','बंद जूते।','गेट पास की पहचान शर्त नियोक्ता से पूछें।','करणी। सीमेंट खरीदा है।','सामान दिया जाएगा।','टेस्टर और ड्रिल।','दैनिक भुगतान के लिए UPI वाला फ़ोन।','अपने औज़ार।','सफ़ाई का सामान दिया जाएगा।','वेल्डिंग नहीं, हाथ के औज़ार।','दस्ताने। दोपहर का भोजन दिया जाएगा।']
+const schedulesHi = ['सुबह 8 – शाम 5','सुबह 9 – शाम 6','रात 10 – सुबह 4','सुबह 8 – शाम 5','सुबह 11, लगभग 3 घंटे','सुबह 9 – शाम 6','सुबह 8 – शाम 5','सुबह 9 – शाम 6, रविवार छुट्टी','सुबह 9 – शाम 4','सुबह 8 – शाम 4','दोपहर 2 के बाद','सुबह 7 – दोपहर 3','सुबह 9 – शाम 6','सुबह 9 – शाम 5','सुबह','सुबह 8 – शाम 6']
+export const JOBS = RAW_JOBS.map((j,i) => ({
+  ...j, titleHi: titlesHi[i], placeHi: placesHi[i], bringHi: bringsHi[i], hoursHi: schedulesHi[i],
+  startDate: dates[i], durationDays: durations[i], hoursCount: hourCounts[i],
+  lngLat: [72.8697 + j.x * KM / (111.32 * Math.cos(19.1136 * Math.PI / 180)), 19.1136 - j.z * KM / 110.57],
+  payday: i === 11 ? 'daily' : i === 7 ? 'monthly' : i % 3 === 0 ? 'weekly' : null,
+  fee: i % 4 === 0 ? 0 : null, written: i % 3 === 0 ? true : null,
+  verification: j.verified ? 'sample-history' : 'unknown', address: true,
+}))
+export const money = (n) => `₹${Number(n).toLocaleString('en-IN')}`
 export const payLine = (j) => `${money(j.pay)} / ${j.unit}`

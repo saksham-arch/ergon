@@ -104,12 +104,12 @@ export default function Shards() {
     const R = d.start ? d.start.r : 100
     ring.current.visible = k > 0.001
     ring.current.position.set(fx, fy, 1)
-    ring.current.scale.setScalar(R * (1.2 + (1 - k) * 3.2))
+    ring.current.scale.setScalar(R * (0.9 + (1 - k) * 2.2))
     ring.current.material.opacity = k * k
     glow.current.visible = k > 0.001
     glow.current.position.set(fx, fy, 0.5)
-    glow.current.scale.setScalar(R * (1.6 + (1 - k) * 1.2))
-    glow.current.material.opacity = k * 0.8
+    glow.current.scale.setScalar(R * (0.9 + (1 - k) * 0.7))
+    glow.current.material.opacity = k * 0.65
   })
 
   return (

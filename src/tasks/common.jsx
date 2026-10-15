@@ -1,0 +1,6 @@
+import { useState } from 'react'
+import { useI18n } from '../i18n/index.jsx'
+export function SaveStatus({status}) {const {t}=useI18n();return <p className="save-status" role="status">{t({saved:'local',saving:'saving',unavailable:'unavailable',recovered:'recovered',cleared:'cleared'}[status]||'newDraft')}</p>}
+export function ClearDraft({onClear}) {const {t}=useI18n();const [confirm,setConfirm]=useState(false);return confirm?<div className="clear-confirm"><p>{t('confirmClear')}</p><button type="button" onClick={()=>{onClear();setConfirm(false)}}>{t('clear')}</button><button type="button" onClick={()=>setConfirm(false)}>{t('cancel')}</button></div>:<button type="button" className="quiet-action" onClick={()=>setConfirm(true)}>{t('clear')}</button>}
+export function Field({id,label,error,hint,children}) {return <div className="task-field"><label htmlFor={id}>{label}</label>{children}{hint&&<p id={`${id}-hint`} className="field-hint">{hint}</p>}{error&&<p id={`${id}-error`} className="field-error" role="alert">{error}</p>}</div>}
+export function Choice({id,label,value,onChange,choices}) {return <Field id={id} label={label}><select id={id} value={value} onChange={e=>onChange(e.target.value)}>{choices.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></Field>}

@@ -7,29 +7,28 @@ they're owed.
 
 *Ergon* (ἔργον) is Greek for work, and for the deed done.
 
-## The four parts
+## The connected world
 
-- **The climb (hero).** A painted golden-hour hillside in three.js above the
-  sea. Scroll to make the marble Sisyphus push a limestone boulder threaded
-  with gold up a textured hill. A swallow carries the headline above him on a
-  silk ribbon; marble stelae on the slope below are carved with the story as
-  he passes. Stop scrolling and the boulder slips back.
-- **I · Hermes, find work.** A painted neighbourhood map on a walnut board.
-  Every job is a glass flower in its trade's colour. Drag the golden caduceus
-  to your naka; the glass ring is how far you'll walk. Filter by trade and
-  time, read the ledger, open a job, and send word: a messenger flies to it.
-- **II · Hephaestus, your craft.** Build a work card with no résumé: trade,
-  name, years, languages, skills, photos of real work, a spoken intro. Strike
-  the anvil three times, quench it, and the bronze tablet goes into a glass
-  case you can open and turn. The card downloads as a PNG.
-- **III · Themis, your rights.** A bronze balance with glass pans. Weigh an
-  offer term by term (pay against the local rate, hours, payday, address,
-  fees), find the welfare schemes you qualify for and what to bring, or touch
-  her sword to prepare a claim for unpaid wages.
+Scroll up the hillside with Sisyphus, then follow the thrown chrome sphere as
+it splits into 28 smaller boulders and falls into the amphora. The transition
+is rendered in code and reverses with the scroll; no video is needed.
 
-Every canvas runs through a Kuwahara "oil paint" pass (toggle it with
-*Painted* in the nav). Backdrops, textures, emblems and worker plates were
-painted with Codex image generation.
+Inside the colonnaded hall, four chapters connect a 3D exhibit to a tool:
+Hermes finds work, Hephaestus makes a downloadable PNG work card, Themis
+weighs offer terms, and Athena explores schemes and prepares a downloadable
+wage-reminder draft. The chapter rail skips directly between tools. Turn the
+vase or use the worker strip to open records. In the final hall scene, tap
+“Throw a day of work” to launch a physics boulder.
+
+The hall opens into a scroll-driven descent onto a MapLibre street map.
+Glass flowers represent example jobs around Andheri, Mumbai. Filter the list,
+open full terms, drag your location marker, or opt into geolocation. Distances
+and walking times are estimates. Geolocation never moves example jobs to
+pretend they are local vacancies. Map tiles require a network connection;
+the job list remains available when the map cannot load.
+
+Saving example work and sending word are session-only demo interactions.
+No employer is contacted. Wage reminders are local drafts and are not filed.
 
 ## Run
 
@@ -40,3 +39,10 @@ npm run dev
 
 All people, jobs and rates are mock data. Scheme rules are summarised from
 public scheme pages; check them at a Common Service Centre.
+
+## Verification
+
+`npm run check` verifies deterministic split/reversal/landing, projected mouth
+alignment, chapter selection and offer presets. `npm run build` checks the
+production bundle. These checks do not establish physical-device frame rate,
+camera/microphone access, speech voices or live employer services.
