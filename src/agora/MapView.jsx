@@ -24,7 +24,7 @@ export default function MapView(props){
   setStatus('loading')
   const fail=()=>{if(!dead){state.current.active=false;setStatus('failed')}}
   try {
-   map=new maplibregl.Map({container:box.current,style:'https://tiles.openfreemap.org/styles/liberty',center:props.origin,zoom:14,pitch:50,bearing:-20,cooperativeGestures:false,attributionControl:{compact:true},maxPitch:65})
+   map=new maplibregl.Map({container:box.current,style:'https://tiles.openfreemap.org/styles/liberty',center:props.origin,zoom:15.6,pitch:50,bearing:-20,cooperativeGestures:false,attributionControl:{compact:true},maxPitch:65})
    mapRef.current=map
    timer=setTimeout(fail,12000)
    map.addControl(new maplibregl.NavigationControl(),'top-right')
@@ -57,7 +57,7 @@ export default function MapView(props){
      const el=document.createElement('div');el.className='map-origin';el.setAttribute('aria-hidden','true')
      markerRef.current=new maplibregl.Marker({element:el,draggable:true}).setLngLat(state.current.origin).addTo(map)
      markerRef.current.on('dragend',()=>{const p=markerRef.current.getLngLat();state.current.onMove([p.lng,p.lat])})
-     clearTimeout(timer);state.current.active=!document.hidden&&!!state.current.inView;setStatus('ready');if(state.current.jobs.length){const bounds=new maplibregl.LngLatBounds();state.current.jobs.forEach(j=>bounds.extend(j.lngLat));map.fitBounds(bounds,{padding:window.innerWidth>760?{top:65,bottom:65,left:400,right:65}:65,maxZoom:14.7,duration:0,pitch:52,bearing:-20})}
+     clearTimeout(timer);state.current.active=!document.hidden&&!!state.current.inView;setStatus('ready');map.jumpTo({center:state.current.origin,zoom:15.6,pitch:52,bearing:-20,padding:sidebarPadding()})
     }catch{fail()}
    })
    const pick=point=>{

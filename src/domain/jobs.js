@@ -1,3 +1,4 @@
+import { allJobs } from './marketplace.js'
 import { DEMO_DATE, DEMO_ORIGIN, JOBS, TRADES } from '../hermes/jobs.js'
 import { createLocalStore, isObject } from './storage.js'
 export function distanceKm([a,b],[c,d]) {
@@ -18,8 +19,8 @@ export function matchesDate(job, filter, reference = DEMO_DATE) {
   return true
 }
 export const DEFAULT_FILTERS = { sector:'all', trade:'all', when:'all', km:4, origin:DEMO_ORIGIN, selected:null }
-export const jobStore = createLocalStore('jobs', { ...DEFAULT_FILTERS, interest:{}, hold:null }, x => isObject(x) && (x.sector===undefined||['all','private','government'].includes(x.sector)) && (x.trade === 'all' || TRADES.some(t=>t.id===x.trade)) && ['all','day','week','long'].includes(x.when) && [2,4,7].includes(x.km) && Array.isArray(x.origin) && x.origin.length===2 && x.origin.every(Number.isFinite) && Math.abs(x.origin[0])<=180 && Math.abs(x.origin[1])<=90 && (x.selected===null || JOBS.some(j=>j.id===x.selected)) && isObject(x.interest) && Object.entries(x.interest).every(([id,n])=>JOBS.some(j=>j.id===id)&&Number.isFinite(n)) && (x.hold===null || isObject(x.hold)&&JOBS.some(j=>j.id===x.hold.id)&&Number.isFinite(x.hold.until)))
-export function selectJobs(filters, jobs = JOBS) {
+export const jobStore = createLocalStore('jobs', { ...DEFAULT_FILTERS, interest:{}, hold:null }, x => isObject(x) && (x.sector===undefined||['all','private','government'].includes(x.sector)) && (x.trade === 'all' || TRADES.some(t=>t.id===x.trade)) && ['all','day','week','long'].includes(x.when) && [2,4,7].includes(x.km) && Array.isArray(x.origin) && x.origin.length===2 && x.origin.every(Number.isFinite) && Math.abs(x.origin[0])<=180 && Math.abs(x.origin[1])<=90 && (x.selected===null || allJobs().some(j=>j.id===x.selected)) && isObject(x.interest) && Object.entries(x.interest).every(([id,n])=>allJobs().some(j=>j.id===id)&&Number.isFinite(n)) && (x.hold===null || isObject(x.hold)&&allJobs().some(j=>j.id===x.hold.id)&&Number.isFinite(x.hold.until)))
+export function selectJobs(filters, jobs = allJobs()) {
   return jobs.map(j => ({...j, dist:distanceKm(filters.origin,j.lngLat)}))
     .filter(j => (!filters.sector||filters.sector==='all'||j.sector===filters.sector)&&(filters.trade==='all'||j.trade===filters.trade)&&matchesDate(j,filters.when)&&j.dist<=filters.km).sort((a,b)=>a.dist-b.dist)
 }

@@ -226,7 +226,7 @@ export function createFlowerLayer({ read, colorOf }) {
     },
     screenHeight() {
       const mpp = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / Math.pow(2, map.getZoom())
-      return ((this.scaleFor() * UP) / mpp) * Math.sin((map.getPitch() * Math.PI) / 180)
+      return ((this.scaleFor() * UP * 1.18) / mpp) * Math.sin((map.getPitch() * Math.PI) / 180)
     },
     send(fromLngLat, job) {
       if (!origin || reduced.matches) return
@@ -267,7 +267,7 @@ export function createFlowerLayer({ read, colorOf }) {
         f.mat.opacity = j.open ? 0.94 : 0.5
         const s = (j.open ? 1 : 0.7) * (isSel ? 1.25 : isHov ? 1.12 : 1)
         f.scale += (s - f.scale) * (reduced.matches ? 1 : 0.12)
-        f.group.scale.setScalar(f.scale * k)
+        f.group.scale.setScalar(f.scale * k * 1.18)
         f.head.position.y = f.h + (reduced.matches ? 0 : Math.sin(now * 1.8 + j.x * 4) * (isSel ? .09 : .045))
         f.group.rotation.z = reduced.matches ? 0 : Math.sin(now * 1.4 + j.x * 3) * .055
         f.group.rotation.x = reduced.matches ? 0 : Math.cos(now * 1.1 + j.z * 3) * .035
@@ -291,7 +291,7 @@ export function createFlowerLayer({ read, colorOf }) {
         }
         // Positions are in metres; the flower stands k metres per model unit.
         const f = flowers.get(fl.job.id)
-        const b = local(fl.job.lngLat).setY((f ? f.h * f.scale : 1.2) * k)
+        const b = local(fl.job.lngLat).setY((f ? f.h * f.scale : 1.2) * k * 1.18)
         const a = fl.a.clone().setY(0.9 * k)
         const c = a.clone().lerp(b, 0.5)
         c.y += 3.5 * k
