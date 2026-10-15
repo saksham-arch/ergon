@@ -256,7 +256,10 @@ export default function App() {
   // The boulder's canvas sleeps once the climb is well off screen.
   const [awake, setAwake] = useState(true)
   useEffect(() => {
-    const check = () => setAwake(window.scrollY < CLIMB + 260 + window.innerHeight * 1.3)
+    const check = () => {
+      setAwake(window.scrollY < CLIMB + 260 + window.innerHeight * 1.3)
+      document.documentElement.classList.toggle('past-climb', window.scrollY > CLIMB + 260)
+    }
     check()
     window.addEventListener('scroll', check, { passive: true })
     return () => window.removeEventListener('scroll', check)
