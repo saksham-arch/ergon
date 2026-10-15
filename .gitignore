@@ -1,4 +1,4 @@
 node_modules
-dist
-art-src
+/dist
+/art-src
 .DS_Store
