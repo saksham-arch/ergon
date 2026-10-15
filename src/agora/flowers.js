@@ -230,7 +230,8 @@ export function createFlowerLayer({ read, colorOf }) {
       return ((this.scaleFor() * UP) / mpp) * Math.sin((map.getPitch() * Math.PI) / 180)
     },
     send(fromLngLat, job) {
-      if (!origin) return
+      if (!origin || reduced.matches) return
+      map.triggerRepaint()
       flights.push({ a: local(fromLngLat), job, t: performance.now() })
     },
     render(gl, args) {

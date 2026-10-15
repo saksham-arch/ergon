@@ -31,12 +31,10 @@ assert.equal(new Set(LANDMARKS.map(x=>x.kind)).size,4)
 for(const x of LANDMARKS){assert.ok(distanceKm(DEMO_ORIGIN,x.lngLat)<20);assert.ok(x.address&&x.description&&x.source.startsWith('https://'));assert.ok(x.lngLat.every(Number.isFinite))}
 landmarks.update(1,1/30,92,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},false)
 for(const item of landmarks.items){assert.ok(item.group.children.length>1);assert.ok(!new Box3().setFromObject(item.group).isEmpty())}
-let opened=null
 globalThis.location={hash:'#map'}
-globalThis.window={dispatchEvent:event=>{opened=event.detail}}
+globalThis.requestAnimationFrame=()=>{}
 checkJob(JOBS[20])
-assert.equal(opened,'trust','map offer checker opens its local 3D balance')
-assert.equal(location.hash,'#map','checking terms keeps the map route')
+assert.equal(location.hash,'#trust','offer review uses the single original tool in the vase')
 assert.equal(offerStore.getSnapshot().data.source,JOBS[20].id)
 disposeObject(balance.root);disposeObject(group)
 console.log('Agora checks passed: 96 stable job locations, all trades, filters, 7 sourced real-place landmarks, shared balance and reduced motion.')

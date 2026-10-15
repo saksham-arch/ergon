@@ -8,6 +8,5 @@ export function offerFromJob(j) {
 export function checkJob(j) {
  const current=offerStore.getSnapshot().data
  if(current.source!==j.id) offerStore.set({offer:offerFromJob(j),source:j.id,preset:null})
- if (typeof location !== 'undefined' && location.hash === '#map') window.dispatchEvent(new CustomEvent('ergon-exhibit', {detail:'trust'}))
- else navigate('trust')
+ navigate('trust')
 }

@@ -12,7 +12,7 @@ import { useI18n } from '../i18n/index.jsx'
 maplibregl.setWorkerUrl(workerUrl)
 function ring([lng,lat],km){const coordinates=Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2;return [lng+Math.cos(a)*km/(111.32*Math.cos(lat*Math.PI/180)),lat+Math.sin(a)*km/110.57]});return {type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[coordinates]}}}
 export default function MapView(props){
- const {t,lang}=useI18n(), box=useRef(),mapRef=useRef(),markerRef=useRef(),state=useRef(),[status,setStatus]=useState('loading')
+ const {t,lang}=useI18n(), box=useRef(),mapRef=useRef(),markerRef=useRef(),layerRef=useRef(),previousInterest=useRef(props.interest),state=useRef(),[status,setStatus]=useState('loading')
  state.current={...state.current,...props,jobs:props.jobs.map(j=>({...j,open:true})),sent:new Set(Object.keys(props.interest)),me:props.origin,hover:state.current?.hover??null}
  useEffect(()=>{
   let map,dead=false,timer,layer,observer
@@ -32,10 +32,10 @@ export default function MapView(props){
      greekify(map)
      map.addSource('reach',{type:'geojson',data:ring(state.current.origin,state.current.km)})
      map.addLayer({id:'reach-line',type:'line',source:'reach',paint:{'line-color':'#8c451e','line-width':2,'line-dasharray':[2,2]}})
-     layer=createFlowerLayer({read:()=>({...state.current,weights:weighOffer(offerStore.getSnapshot().data.offer)}),colorOf:id=>tradeOf(id).color});map.addLayer(layer)
+     layer=createFlowerLayer({read:()=>({...state.current,weights:weighOffer(offerStore.getSnapshot().data.offer)}),colorOf:id=>tradeOf(id).color});map.addLayer(layer);layerRef.current=layer
      for(const landmark of LANDMARKS){
-      const button=document.createElement('button');button.type='button';button.className='map-landmark';button.textContent=lang==='hi'?landmark.hi:landmark.name
-      button.setAttribute('aria-label',`${button.textContent} · ${lang==='hi'?'स्थान देखें':'View place'}`)
+      const button=document.createElement('button');button.type='button';button.className='map-landmark';button.textContent=''
+      button.setAttribute('aria-label',`${lang==='hi'?landmark.hi:landmark.name} · ${lang==='hi'?'स्थान देखें':'View place'}`)
       button.addEventListener('click',e=>{e.stopPropagation();state.current.onPlaceSelect(landmark)})
       landmarks.push(new maplibregl.Marker({element:button,anchor:'bottom',offset:[0,-45]}).setLngLat(landmark.lngLat).addTo(map))
      }
@@ -56,7 +56,7 @@ export default function MapView(props){
    observer=new IntersectionObserver(([entry])=>{state.current.inView=entry.isIntersecting;visibility()});observer.observe(box.current)
    document.addEventListener('visibilitychange',visibility)
    const unsubscribeOffer=offerStore.subscribe(()=>map.triggerRepaint())
-   return()=>{dead=true;clearTimeout(timer);unsubscribeOffer();observer.disconnect();document.removeEventListener('visibilitychange',visibility);landmarks.forEach(m=>m.remove());map.remove();mapRef.current=null}
+   return()=>{dead=true;clearTimeout(timer);unsubscribeOffer();observer.disconnect();document.removeEventListener('visibilitychange',visibility);landmarks.forEach(m=>m.remove());map.remove();mapRef.current=null;layerRef.current=null}
   }catch{fail();map?.remove()}
   return()=>{dead=true;clearTimeout(timer)}
  },[lang])
@@ -64,6 +64,12 @@ export default function MapView(props){
   const map=mapRef.current;if(!map)return
   markerRef.current?.setLngLat(props.origin);map.getSource('reach')?.setData(ring(props.origin,props.km));map.triggerRepaint()
  },[props.jobs,props.origin,props.km,props.selected,status])
+ useEffect(()=>{
+  for(const [id,interested] of Object.entries(props.interest))if(interested&&!previousInterest.current[id]){
+   const job=props.jobs.find(j=>String(j.id)===id);if(job)layerRef.current?.send(props.origin,job)
+  }
+  previousInterest.current=props.interest
+ },[props.interest])
  useEffect(()=>{mapRef.current?.jumpTo({center:props.origin})},[props.origin])
  useEffect(()=>{if(props.selectedPlace)mapRef.current?.jumpTo({center:props.selectedPlace.lngLat,zoom:15,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300}})},[props.selectedPlace,status])
  useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300},zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
