@@ -7,8 +7,8 @@ import {SaveStatus,ClearDraft} from './common.jsx'
 import Listen from '../ui/Listen.jsx'
 const defaults={age:34,work:'construction',income:'low',aadhaar:'unknown',bank:'unknown',coverage:'unknown',employer:'',days:'',rate:'',draft:'',ready:false}
 const store=createLocalStore('rights',defaults,x=>isObject(x)&&isText(x.employer,120)&&isText(x.draft,12000)&&Number(x.age)>=14&&Number(x.age)<=75&&['construction','vending','domestic','other'].includes(x.work)&&['low','high'].includes(x.income)&&['aadhaar','bank','coverage'].every(k=>['yes','no','unknown'].includes(x[k]))&&['days','rate'].every(k=>isText(x[k],20)))
-export default function Rights(){
- const {t,lang}=useI18n(),[a,set,status]=useStore(store),[mode,setMode]=useState('schemes'),[attempt,setAttempt]=useState(false),say=(en,hi)=>lang==='hi'?hi:en
+export default function Rights({initialMode='schemes'}){
+ const {t,lang}=useI18n(),[a,set,status]=useStore(store),[mode,setMode]=useState(initialMode),[attempt,setAttempt]=useState(false),say=(en,hi)=>lang==='hi'?hi:en
  const edit=(key,value)=>set(s=>({...s,[key]:value,ready:false}))
  const schemes=matchSchemes(a).yes,days=numeric(a.days,1,30),rate=numeric(a.rate,.01,10000000),valid=a.employer.trim()&&Number.isInteger(days)&&rate!==null,owed=(days||0)*(rate||0)
  const select=(key,label,options)=><label className="field"><span>{label}</span><select value={a[key]} onChange={e=>edit(key,e.target.value)}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>

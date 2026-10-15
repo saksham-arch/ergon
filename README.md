@@ -30,8 +30,11 @@ The map and gallery are separate chunks. The gallery mounts when approached, pau
 
 ## The four tools
 
-The main site and map page both include a permanent sculpture display, reachable
-through “The tools”. Choose Hermes’ winged staff, Hephaestus’ bronze tablet,
+The main site includes a permanent sculpture display, reachable through “The tools”.
+On the map page the same sculptures represent Private Work, Government Work,
+Court and Labour Law Office. The work desks filter the 96 fictional listings by
+source; Court offers the balance and wage-reminder draft, while Labour Law Office
+opens worker-support tools. These are demo destinations, not real office addresses. Choose Hermes’ winged staff, Hephaestus’ bronze tablet,
 Themis’ balance, or Athena’s owl and scroll. Open the corresponding tool beside
 the sculpture; the card face and balance respond to your local draft. Map landmark
 buttons open the same tools without leaving the map page. “Check terms” on a map
@@ -44,3 +47,6 @@ reduced-motion users can explore the sculptures without continuous animation.
 The world checks cover deterministic throw/split/reverse/mouth alignment/landing and chapters. The domain checks include 112 assertions for date boundaries, pay intervals, invalid and unknown terms, units, persistence failures, local holds, job imports and vase UV picking. A production build checks integration.
 
 Browser/computer testing was stopped at the user's request. Real-device layout, keyboard, camera/microphone, map-network and live 3D interaction acceptance remains separate from those code checks. See `docs/IMPLEMENTATION_STATUS.md` for the implementation ledger.
+
+The obsolete scrolling Agora component and its styles have been removed. Draft
+persistence remains available without routine saved-on-device status text.

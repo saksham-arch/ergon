@@ -50,7 +50,7 @@ const placesHi = ['अंधेरी पूर्व, स्टेशन के
 const bringsHi = ['रोलर और स्क्रेपर। पेंट दिया जाएगा।','टेस्टर और अपने हाथ के औज़ार।','दस्ताने। रात 1 बजे चाय और खाना।','करणी और लेवल। हेलमेट दिया जाएगा।','रिंच सेट और थ्रेड टेप।','ड्रिल और प्लेनर। लकड़ी साइट पर है।','बंद जूते।','गेट पास की पहचान शर्त नियोक्ता से पूछें।','करणी। सीमेंट खरीदा है।','सामान दिया जाएगा।','टेस्टर और ड्रिल।','दैनिक भुगतान के लिए UPI वाला फ़ोन।','अपने औज़ार।','सफ़ाई का सामान दिया जाएगा।','वेल्डिंग नहीं, हाथ के औज़ार।','दस्ताने। दोपहर का भोजन दिया जाएगा।']
 const schedulesHi = ['सुबह 8 – शाम 5','सुबह 9 – शाम 6','रात 10 – सुबह 4','सुबह 8 – शाम 5','सुबह 11, लगभग 3 घंटे','सुबह 9 – शाम 6','सुबह 8 – शाम 5','सुबह 9 – शाम 6, रविवार छुट्टी','सुबह 9 – शाम 4','सुबह 8 – शाम 4','दोपहर 2 के बाद','सुबह 7 – दोपहर 3','सुबह 9 – शाम 6','सुबह 9 – शाम 5','सुबह','सुबह 8 – शाम 6']
 const BASE_JOBS = RAW_JOBS.map((j,i) => ({
-  ...j, titleHi: titlesHi[i], placeHi: placesHi[i], bringHi: bringsHi[i], hoursHi: schedulesHi[i],
+  ...j, sector: j.id==='j10'?'government':'private', titleHi: titlesHi[i], placeHi: placesHi[i], bringHi: bringsHi[i], hoursHi: schedulesHi[i],
   startDate: dates[i], durationDays: durations[i], hoursCount: hourCounts[i],
   lngLat: [72.8697 + j.x * KM / (111.32 * Math.cos(19.1136 * Math.PI / 180)), 19.1136 - j.z * KM / 110.57],
   payday: i === 11 ? 'daily' : i === 7 ? 'monthly' : i % 3 === 0 ? 'weekly' : null,
@@ -70,6 +70,17 @@ const EXTRA_JOBS = BASE_JOBS.flatMap((job, i) => [0, 1].map(copy => {
     lngLat: [DEMO_ORIGIN[0] + x * KM / (111.32 * Math.cos(DEMO_ORIGIN[1] * Math.PI / 180)), DEMO_ORIGIN[1] - z * KM / 110.57],
   }
 }))
-export const JOBS = [...BASE_JOBS, ...EXTRA_JOBS]
+const MORE_JOBS = [...BASE_JOBS,...EXTRA_JOBS].map((job,i)=>{
+ const government=i%3===0,angle=i*2.399963+.7,radius=.45+(i%29)/10
+ const lngLat=[DEMO_ORIGIN[0]+Math.cos(angle)*radius/(111.32*Math.cos(DEMO_ORIGIN[1]*Math.PI/180)),DEMO_ORIGIN[1]+Math.sin(angle)*radius/110.57]
+ return {...job,id:`j${49+i}`,sector:government?'government':'private',lngLat,
+ x:Math.cos(angle)*radius/KM,z:-Math.sin(angle)*radius/KM,
+ title:government?`Public-site ${job.trade} work · example project`:job.title,
+ titleHi:government?`सार्वजनिक स्थल पर ${TRADES.find(t=>t.id===job.trade).hi} काम · नमूना परियोजना`:job.titleHi,
+ employer:government?'Sample public maintenance contractor':`${job.employer} · additional example`,
+ place:government?'Example public maintenance site, Andheri':'Example neighbourhood worksite, Andheri',
+ placeHi:government?'नमूना सार्वजनिक रखरखाव स्थल, अंधेरी':'नमूना स्थानीय कार्यस्थल, अंधेरी'}
+})
+export const JOBS = [...BASE_JOBS, ...EXTRA_JOBS, ...MORE_JOBS]
 export const money = (n) => `₹${Number(n).toLocaleString('en-IN')}`
 export const payLine = (j) => `${money(j.pay)} / ${j.unit}`

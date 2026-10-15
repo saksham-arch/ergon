@@ -11,6 +11,8 @@ import { useI18n } from '../i18n/index.jsx'
 import { useStore } from '../domain/storage.js'
 import { offerStore } from '../domain/offers.js'
 import { weighOffer } from '../themis/rules.js'
+import { destinationOf } from '../agora/destinations.js'
+import { jobStore } from '../domain/jobs.js'
 import { navigate } from '../domain/navigation.js'
 import './gallery.css'
 const Card=lazy(()=>import('../tasks/Card.jsx'))
@@ -25,13 +27,16 @@ const exhibits=[
 export default function ExhibitGallery({ mapPage=false }) {
  const {lang}=useI18n(),[index,setIndex]=useState(2),[open,setOpen]=useState(false),[active,setActive]=useState(false),[loaded,setLoaded]=useState(false),[reduced,setReduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),section=useRef()
  const [offer]=useStore(offerStore),weights=weighOffer(offer.offer)
- const item=exhibits[index],Model=item.Component,Tool=item.Tool,hi=lang==='hi'
+ const base=exhibits[index],destination=mapPage?destinationOf(base.id):null
+ const item=destination?{...base,...destination,object:destination.label,objectHi:destination.labelHi}:base
+ const Model=item.Component,Tool=mapPage&&item.id==='trust'?CourtTools:item.Tool,hi=lang==='hi'
+ const showSector=()=>{jobStore.set(s=>({...s,sector:destination.sector,trade:'all',when:'all',selected:null}));document.getElementById('nearby-work')?.scrollIntoView({behavior:'instant'})}
  useEffect(()=>{const query=matchMedia('(prefers-reduced-motion: reduce)'),change=()=>setReduced(query.matches);query.addEventListener('change',change);const observer=new IntersectionObserver(([entry])=>{setActive(entry.isIntersecting);if(entry.isIntersecting)setLoaded(true)},{rootMargin:'180px'});observer.observe(section.current);return()=>{query.removeEventListener('change',change);observer.disconnect()}},[])
  useEffect(()=>{if(!mapPage)return;const change=e=>{const i=exhibits.findIndex(x=>x.id===e.detail);if(i>=0){setIndex(i);setOpen(i!==0);section.current?.scrollIntoView({behavior:'instant',block:'start'})}};window.addEventListener('ergon-exhibit',change);return()=>window.removeEventListener('ergon-exhibit',change)},[mapPage])
  const pick=i=>{setIndex(i);setOpen(i!==0)}
  return <section id={mapPage?'map-tools':'tools'} ref={section} className={`exhibit-gallery ${mapPage?'on-map':''}`} aria-labelledby={mapPage?'map-exhibits-title':'exhibits-title'}>
- <header className="exhibit-heading"><p>ἔργον · {hi?'काम के चार साथी':'Four companions for a day of work'}</p><h2 id={mapPage?'map-exhibits-title':'exhibits-title'}>{hi?'कहानी से आपके हाथ तक।':'From the myth, into your hands.'}</h2></header>
- <div className="exhibit-choices" role="group" aria-label={hi?'3D वस्तु चुनें':'Choose a 3D exhibit'}>{exhibits.map((e,i)=><button key={e.id} onClick={()=>pick(i)} aria-pressed={index===i}><span className="exhibit-numeral">{['Α','Β','Γ','Δ'][i]}</span><span><strong>{hi?e.labelHi:e.label}</strong><small>{hi?e.hi:e.name}</small></span></button>)}</div>
+ <header className="exhibit-heading"><p>ἔργον · {mapPage?(hi?'काम और सहायता के चार रास्ते':'Work, support and fair terms'):(hi?'काम के चार साथी':'Four companions for a day of work')}</p><h2 id={mapPage?'map-exhibits-title':'exhibits-title'}>{mapPage?(hi?'काम ढूँढें। अपने हक़ जानें।':'Find work. Know where to turn.'):(hi?'कहानी से आपके हाथ तक।':'From the myth, into your hands.')}</h2></header>
+ <div className="exhibit-choices" role="group" aria-label={hi?'3D वस्तु चुनें':'Choose a 3D exhibit'}>{exhibits.map((e,i)=><button key={e.id} onClick={()=>pick(i)} aria-pressed={index===i}><span className="exhibit-numeral">{['Α','Β','Γ','Δ'][i]}</span><span><strong>{hi?(mapPage?destinationOf(e.id).labelHi:e.labelHi):(mapPage?destinationOf(e.id).label:e.label)}</strong><small>{hi?e.hi:e.name}</small></span></button>)}</div>
  <div className="exhibit-display">
  <div className="exhibit-model" role="img" aria-label={`${hi?item.objectHi:item.object} · ${hi?'घुमाने के लिए खींचें':'Drag to turn the 3D sculpture'}`}>
  <SceneBoundary key={item.id} fallback={<img className="exhibit-fallback" src={`/art/gods/${item.art}.jpg`} alt={hi?item.objectHi:item.object}/>}>
@@ -45,9 +50,15 @@ export default function ExhibitGallery({ mapPage=false }) {
  </SceneBoundary><span className="exhibit-turn">{hi?'खींचकर घुमाएँ':'Drag to turn'} ↔</span>
  </div>
  <div className="exhibit-copy"><p className="exhibit-god">{hi?item.hi:item.name} · {['Α','Β','Γ','Δ'][index]}</p><h3>{hi?item.objectHi:item.object}</h3><p>{hi?item.bodyHi:item.body}</p>
- {Tool?<button className="exhibit-action" aria-expanded={open} onClick={()=>setOpen(!open)}>{open?(hi?'साधन बंद करें':'Close the tool'):(hi?item.labelHi:item.label)} <span>{open?'−':'↗'}</span></button>:<button className="exhibit-action" onClick={()=>mapPage?document.getElementById('nearby-work')?.scrollIntoView({behavior:'instant'}):navigate('map')}>{hi?'नक़्शे पर काम देखें':'Explore work on the map'} ↗</button>}
- <p className="exhibit-caption">{hi?'काँसा · संगमरमर · काँच':'BRONZE · MARBLE · GLASS'}</p></div>
+ {destination?.sector&&<button className="exhibit-action" onClick={showSector}>{hi?'ये काम देखें':'Explore these jobs'} ↗</button>}
+ {Tool?<button className="exhibit-action" aria-expanded={open} onClick={()=>setOpen(!open)}>{open?(hi?'साधन बंद करें':'Close the tool'):(mapPage&&item.id==='craft'?(hi?'काम कार्ड बनाएँ':'Make a work card'):(hi?item.labelHi:item.label))} <span>{open?'−':'↗'}</span></button>:destination?.sector?null:<button className="exhibit-action" onClick={()=>mapPage?document.getElementById('nearby-work')?.scrollIntoView({behavior:'instant'}):navigate('map')}>{hi?'सभी काम देखें':'Explore all nearby work'} ↗</button>}
+ <p className="exhibit-caption">{mapPage?(hi?'नमूना स्थान · वास्तविक कार्यालय के पते नहीं':'DEMO DESTINATIONS · NOT REAL OFFICE ADDRESSES'):(hi?'काँसा · संगमरमर · काँच':'BRONZE · MARBLE · GLASS')}</p></div>
  </div>
  {open&&Tool&&<div className="exhibit-tool"><Suspense fallback={<p>{hi?'साधन खुल रहा है…':'Opening the tool…'}</p>}><Tool/></Suspense></div>}
  </section>
+}
+
+function CourtTools(){
+ const {lang}=useI18n(),[mode,setMode]=useState('offer'),hi=lang==='hi'
+ return <><div className="action-row"><button aria-pressed={mode==='offer'} onClick={()=>setMode('offer')}>{hi?'प्रस्ताव जाँचें':'Check offer terms'}</button><button aria-pressed={mode==='wages'} onClick={()=>setMode('wages')}>{hi?'मज़दूरी याद-दिहानी':'Prepare a wage reminder'}</button></div>{mode==='offer'?<Offer/>:<Rights initialMode="wages"/>}</>
 }

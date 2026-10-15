@@ -40,7 +40,7 @@ const CHAPTERS = [
     kicker: 'Show your skill',
     title: <>Your hands<br />are the résumé.</>,
     hi: 'आपके हाथ ही आपका बायोडाटा हैं।',
-    body: 'No forms, no certificates. Choose your trade, say what you do, add a photo of real work. Your draft stays on this device. Preview it on the bronze tablet and download it.',
+    body: 'No forms, no certificates. Choose your trade, say what you do, add a photo of real work. Preview it on the bronze tablet and download it.',
     say: [['आपके हाथ ही आपका बायोडाटा हैं। अपनी भाषा में बोलिए, अपने काम की फ़ोटो जोड़िए।', 'hi-IN']],
     tool: <CardTool />,
   },

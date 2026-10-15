@@ -66,5 +66,5 @@ export default function MapView(props){
  },[props.jobs,props.origin,props.km,props.selected,status])
  useEffect(()=>{mapRef.current?.jumpTo({center:props.origin})},[props.origin])
  useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
- return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ = आपके साधन':'Flowers = example jobs · Sculptures = your tools'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
+ return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ = काम और सहायता केंद्र':'Flowers = demo work · Idols = work and support desks'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
 }
