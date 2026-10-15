@@ -1,24 +1,20 @@
 import { Group } from 'three'
 import { hermes, hephaestus, athena, temple, tree, cypress, gates, sisyphus, boulder, vase, box, materials } from '../world/myth-models.js'
 import { createBalance } from '../world/balance.js'
-import { destinationOf } from './destinations.js'
 import { DEMO_ORIGIN } from '../hermes/jobs.js'
 
-// Fictional tool landmarks, separate from job locations and public services.
-const positions = [[72.8577,19.1169],[72.8737,19.1187],[72.8744,19.1050],[72.8567,19.1044]]
-export const LANDMARKS = ['work','craft','trust','rights'].flatMap((id,i)=>{
- const d=destinationOf(id),[lng,lat]=positions[i]
- return [0,1,2].map(copy=>({id,key:`${id}-${copy}`,copy,name:d.label,hi:d.labelHi,
- lngLat:copy===0?[lng,lat]:[lng+(copy===1?-.013:.011),lat+(copy===1?.009:-.01)],height:3.5}))
-})
+export { PLACES as LANDMARKS } from './places.js'
+import { PLACES as LANDMARKS } from './places.js'
 
 export function createAgoraLandmarks(parent) {
  const root=new Group();parent.add(root)
  const messenger=hermes(),smith=hephaestus(),guardian=athena(),balance=createBalance()
  const prototypes=[messenger.root,smith.root,balance.root,guardian.root]
+ const used=new Set()
  const items=LANDMARKS.map(landmark=>{
-  const i=['work','craft','trust','rights'].indexOf(landmark.id)
-  const object=landmark.copy===0?prototypes[i]:prototypes[i].clone(true)
+  const i=['work','craft','trust','rights'].indexOf(landmark.kind)
+  const first=!used.has(i);used.add(i)
+  const object=first?prototypes[i]:prototypes[i].clone(true)
   const group=new Group();group.add(object);root.add(group)
   // Reuse the original stone pedestals, architectural garden and sculptural props.
   box(group,[0,-.16,0],[2,.3,1.8],materials.limestone)

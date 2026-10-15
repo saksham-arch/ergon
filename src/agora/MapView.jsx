@@ -20,7 +20,7 @@ export default function MapView(props){
   setStatus('loading')
   const fail=()=>{if(!dead){state.current.active=false;setStatus('failed')}}
   try {
-   map=new maplibregl.Map({container:box.current,style:'https://tiles.openfreemap.org/styles/liberty',center:props.origin,zoom:14,pitch:50,bearing:-20,cooperativeGestures:true,attributionControl:{compact:true},maxPitch:65})
+   map=new maplibregl.Map({container:box.current,style:'https://tiles.openfreemap.org/styles/liberty',center:props.origin,zoom:14,pitch:50,bearing:-20,cooperativeGestures:false,attributionControl:{compact:true},maxPitch:65})
    mapRef.current=map
    timer=setTimeout(fail,12000)
    map.addControl(new maplibregl.NavigationControl(),'top-right')
@@ -35,14 +35,14 @@ export default function MapView(props){
      layer=createFlowerLayer({read:()=>({...state.current,weights:weighOffer(offerStore.getSnapshot().data.offer)}),colorOf:id=>tradeOf(id).color});map.addLayer(layer)
      for(const landmark of LANDMARKS){
       const button=document.createElement('button');button.type='button';button.className='map-landmark';button.textContent=lang==='hi'?landmark.hi:landmark.name
-      button.setAttribute('aria-label',`${button.textContent} · ${lang==='hi'?'साधन खोलें':'Open tool'}`)
-      button.addEventListener('click',e=>{e.stopPropagation();window.dispatchEvent(new CustomEvent('ergon-exhibit',{detail:landmark.id}))})
+      button.setAttribute('aria-label',`${button.textContent} · ${lang==='hi'?'स्थान देखें':'View place'}`)
+      button.addEventListener('click',e=>{e.stopPropagation();state.current.onPlaceSelect(landmark)})
       landmarks.push(new maplibregl.Marker({element:button,anchor:'bottom',offset:[0,-45]}).setLngLat(landmark.lngLat).addTo(map))
      }
      const el=document.createElement('div');el.className='map-origin';el.setAttribute('aria-hidden','true')
      markerRef.current=new maplibregl.Marker({element:el,draggable:true}).setLngLat(state.current.origin).addTo(map)
      markerRef.current.on('dragend',()=>{const p=markerRef.current.getLngLat();state.current.onMove([p.lng,p.lat])})
-     clearTimeout(timer);state.current.active=!document.hidden&&!!state.current.inView;setStatus('ready');if(state.current.jobs.length){const bounds=new maplibregl.LngLatBounds();state.current.jobs.forEach(j=>bounds.extend(j.lngLat));map.fitBounds(bounds,{padding:65,maxZoom:14.7,duration:0,pitch:52,bearing:-20})}
+     clearTimeout(timer);state.current.active=!document.hidden&&!!state.current.inView;setStatus('ready');if(state.current.jobs.length){const bounds=new maplibregl.LngLatBounds();state.current.jobs.forEach(j=>bounds.extend(j.lngLat));map.fitBounds(bounds,{padding:window.innerWidth>760?{top:65,bottom:65,left:400,right:65}:65,maxZoom:14.7,duration:0,pitch:52,bearing:-20})}
     }catch{fail()}
    })
    const pick=point=>{
@@ -65,6 +65,7 @@ export default function MapView(props){
   markerRef.current?.setLngLat(props.origin);map.getSource('reach')?.setData(ring(props.origin,props.km));map.triggerRepaint()
  },[props.jobs,props.origin,props.km,props.selected,status])
  useEffect(()=>{mapRef.current?.jumpTo({center:props.origin})},[props.origin])
- useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
- return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ = काम और सहायता केंद्र':'Flowers = demo work · Idols = work and support desks'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
+ useEffect(()=>{if(props.selectedPlace)mapRef.current?.jumpTo({center:props.selectedPlace.lngLat,zoom:15,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300}})},[props.selectedPlace,status])
+ useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300},zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
+ return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ = वास्तविक स्थान':'Flowers = demo work · Idols = real places · Approximate positions'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
 }
