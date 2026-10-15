@@ -119,7 +119,7 @@ function petalMaterial(color) {
       .replace(
         '#include <beginnormal_vertex>',
         `#include <beginnormal_vertex>
-         float tilt = mix(0.1, 1.45 - aLayer * 0.5, uOpen) + sin(uTime * 1.6 + aAng * 2.0) * (0.03 + uSway * 0.1);
+         float tilt = mix(0.1, 1.45 - aLayer * 0.5, uOpen) + sin(uTime * 1.6 + aAng * 2.0) * (0.10 + uSway * 0.16);
          mat3 rx = mat3(1.0, 0.0, 0.0, 0.0, cos(tilt), sin(tilt), 0.0, -sin(tilt), cos(tilt));
          mat3 ry = mat3(cos(aAng), 0.0, -sin(aAng), 0.0, 1.0, 0.0, sin(aAng), 0.0, cos(aAng));
          objectNormal = ry * rx * objectNormal;`,
@@ -259,7 +259,7 @@ export function createFlowerLayer({ read, colorOf }) {
         const u = f.mat.userData.u
         const isSel = selected === j.id
         const isHov = hover === j.id
-        const tOpen = !j.open ? 0.05 : isSel ? 1.0 : isHov ? 0.94 : 0.8
+        const tOpen = !j.open ? 0.05 : isSel ? 1.0 : isHov ? 0.94 : 0.78 + (reduced.matches ? 0 : Math.sin(now * 1.3 + j.x * 3) * 0.12)
         u.uOpen.value += (tOpen - u.uOpen.value) * (reduced.matches ? 1 : 0.08)
         u.uTime.value = now + j.x
         u.uSway.value += ((isSel || isHov ? 1 : 0) - u.uSway.value) * (reduced.matches ? 1 : 0.1)
@@ -268,7 +268,10 @@ export function createFlowerLayer({ read, colorOf }) {
         const s = (j.open ? 1 : 0.7) * (isSel ? 1.25 : isHov ? 1.12 : 1)
         f.scale += (s - f.scale) * (reduced.matches ? 1 : 0.12)
         f.group.scale.setScalar(f.scale * k)
-        f.head.position.y = f.h + (isSel ? Math.sin(now * 2.2) * 0.04 : 0)
+        f.head.position.y = f.h + (reduced.matches ? 0 : Math.sin(now * 1.8 + j.x * 4) * (isSel ? .09 : .045))
+        f.group.rotation.z = reduced.matches ? 0 : Math.sin(now * 1.4 + j.x * 3) * .055
+        f.group.rotation.x = reduced.matches ? 0 : Math.cos(now * 1.1 + j.z * 3) * .035
+        f.head.rotation.y = reduced.matches ? 0 : Math.sin(now * .8 + j.x) * .18
         f.ring.visible = sent.has(j.id)
         f.ring.rotation.z = now * 0.8
       }

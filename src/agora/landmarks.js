@@ -8,13 +8,10 @@ import { PLACES as LANDMARKS } from './places.js'
 
 export function createAgoraLandmarks(parent) {
  const root=new Group();parent.add(root)
- const messenger=hermes(),smith=hephaestus(),guardian=athena(),balance=createBalance()
- const prototypes=[messenger.root,smith.root,balance.root,guardian.root]
- const used=new Set()
- const items=LANDMARKS.map(landmark=>{
+ const items=LANDMARKS.map((landmark,index)=>{
   const i=['work','craft','trust','rights'].indexOf(landmark.kind)
-  const first=!used.has(i);used.add(i)
-  const object=first?prototypes[i]:prototypes[i].clone(true)
+  const model=[hermes,hephaestus,createBalance,athena][i]()
+  const object=model.root
   const group=new Group();group.add(object);root.add(group)
   // Reuse the original stone pedestals, architectural garden and sculptural props.
   box(group,[0,-.16,0],[2,.3,1.8],materials.limestone)
@@ -22,15 +19,20 @@ export function createAgoraLandmarks(parent) {
   if(i===1){const tablet=box(group,[1.1,1.1,.6],[.8,1.1,.08],materials.bronze);tablet.rotation.y=-.2;vase(group,[-1,.02,.3],1.2)}
   if(i===2){const shrine=temple(group,6,4,3);shrine.position.set(0,0,-2);shrine.scale.setScalar(.55)}
   tree(group,-1.5,-1,.65);cypress(group,1.5,-1,.65)
-  return {group,...landmark}
+  return {group,model,phase:index*.71,...landmark}
  })
  const worker=sisyphus();worker.root.scale.setScalar(.6);worker.root.position.set(-.4,0,0)
  const start=new Group();root.add(start);start.add(worker.root);boulder(start,[.7,.63,0],.63)
  const center={lngLat:DEMO_ORIGIN,group:start}
  return {root,items,update(time,dt,scale,local,weights,reduced,positions={}){
-  for(const item of items){item.group.position.copy(local(positions[item.id]??item.lngLat));item.group.scale.setScalar(scale*.55)}
+  for(const item of items){item.group.position.copy(local(positions[item.id]??item.lngLat));item.group.scale.setScalar(scale*.55)
+   const t=reduced?0:time+item.phase
+   if(item.kind==='trust'){
+    item.model.update(t,reduced?0:dt,weights?.fair??0,weights?.risk??0,reduced)
+    item.model.root.rotation.y=reduced?0:Math.sin(t*.6)*.06
+   }else item.model.animate(t)
+  }
   center.group.position.copy(local(center.lngLat));center.group.scale.setScalar(scale*.7)
-  messenger.animate(reduced?0:time);smith.animate(reduced?0:time);guardian.animate(reduced?0:time);worker.animate(reduced?0:time)
-  balance.update(time,reduced?0:dt,weights?.fair??0,weights?.risk??0,reduced)
+  worker.animate(reduced?0:time)
  }}
 }

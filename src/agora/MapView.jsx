@@ -11,6 +11,10 @@ import { tradeOf } from '../hermes/jobs.js'
 import { useI18n } from '../i18n/index.jsx'
 maplibregl.setWorkerUrl(workerUrl)
 function ring([lng,lat],km){const coordinates=Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2;return [lng+Math.cos(a)*km/(111.32*Math.cos(lat*Math.PI/180)),lat+Math.sin(a)*km/110.57]});return {type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[coordinates]}}}
+function sidebarPadding(){
+ const rail=document.querySelector('.map-sidebar')?.getBoundingClientRect()
+ return window.innerWidth>760?{left:(rail?.right??354)+24,right:20,top:20,bottom:20}:{left:10,right:10,top:20,bottom:(rail?.height??300)+20}
+}
 export default function MapView(props){
  const {t,lang}=useI18n(), box=useRef(),mapRef=useRef(),markerRef=useRef(),layerRef=useRef(),previousInterest=useRef(props.interest),state=useRef(),[status,setStatus]=useState('loading')
  state.current={...state.current,...props,jobs:props.jobs.map(j=>({...j,open:true})),sent:new Set(Object.keys(props.interest)),me:props.origin,landmarkPositions:state.current?.landmarkPositions??{},hover:state.current?.hover??null}
@@ -82,7 +86,7 @@ export default function MapView(props){
   previousInterest.current=props.interest
  },[props.interest])
  useEffect(()=>{mapRef.current?.jumpTo({center:props.origin})},[props.origin])
- useEffect(()=>{if(props.selectedPlace&&!props.selectedPlace.preserveCamera)mapRef.current?.easeTo({center:props.selectedPlace.lngLat,zoom:props.selectedPlace.focusZoom??15,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:550,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300}})},[props.selectedPlace,status])
- useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300},zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
- return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ खींचें · जानकारी के लिए चुनें':'Flowers = demo work · Drag to move · Click for details · Double-click to zoom'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
+ useEffect(()=>{if(props.selectedPlace&&!props.selectedPlace.preserveCamera)mapRef.current?.easeTo({center:props.selectedPlace.lngLat,zoom:props.selectedPlace.focusZoom??15,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:550,padding:sidebarPadding()})},[props.selectedPlace,status])
+ useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,padding:sidebarPadding(),zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
+ return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
 }

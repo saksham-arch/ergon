@@ -36,6 +36,15 @@ landmarks.update(2,1/30,48,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},f
 assert.deepEqual(landmarks.items[0].group.position.toArray(),[72.9,0,19.2],'dragged marker moves the sculpture')
 assert.ok(LANDMARKS.filter(p=>p.demo).length===32)
 for(const kind of ['work','craft','trust','rights'])assert.equal(LANDMARKS.filter(p=>p.demo&&p.kind===kind).length,8)
+const pose=item=>{const values=[];item.model.root.traverse(o=>values.push(...o.position.toArray(),...o.quaternion.toArray(),...o.scale.toArray()));return JSON.stringify(values)}
+landmarks.update(0,1/30,64,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},false)
+const poses=landmarks.items.map(pose)
+landmarks.update(3,1/30,64,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},false)
+landmarks.items.forEach((item,i)=>assert.notEqual(pose(item),poses[i],`${item.id} animates independently`))
+landmarks.update(0,0,64,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},true)
+const still=landmarks.items.map(pose)
+landmarks.update(9,0,64,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},true)
+landmarks.items.forEach((item,i)=>assert.equal(pose(item),still[i],`${item.id} respects reduced motion`))
 globalThis.location={hash:'#map'}
 globalThis.requestAnimationFrame=()=>{}
 checkJob(JOBS[20])

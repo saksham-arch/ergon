@@ -20,7 +20,7 @@ const DEMO_TYPES=[
 const DEMO_PLACES=DEMO_TYPES.flatMap(([kind,name,hi,category],type)=>Array.from({length:8},(_,i)=>{
  const angle=(type+i*4)*Math.PI/8,radius=.009+i*.004
  return {id:`demo-${kind}-${i}`,kind,key:`demo-${kind}-${i}`,copy:i,height:3.5,demo:true,
- name:`${name} ${i+1}`,hi:`${hi} ${i+1}`,category,area:'Andheri · Demo',
+ name:`${name} ${i+1}`,hi:`${hi} ${i+1}`,category,area:'Andheri',
  lngLat:[72.86542+Math.cos(angle)*radius,19.11161+Math.sin(angle)*radius],
  address:`${['Market Square','Station Road','Workshop Lane','Garden Junction','East Arcade','Canal Road','Central Square','Depot Lane'][i]} · Andheri`,
  description:{work:'Meet nearby employers and explore private work opportunities.',craft:'Explore public maintenance and government project work.',trust:'A place to seek guidance on workplace disputes and unpaid wages.',rights:'Find support with worker rights, registration and welfare schemes.'}[kind],source:null}
