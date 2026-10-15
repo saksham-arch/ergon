@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CanvasTexture, Euler, LinearFilter, Object3D, Quaternion, SRGBColorSpace, Vector2, Vector3, Vector4, VideoTexture } from 'three'
 import { project, step, MAX_DROPLETS } from './engine.js'
+import { stepDescent } from './descent.js'
 import { H, W, ground, slope } from './hill.js'
 
 function makeShadow() {
@@ -334,6 +335,18 @@ export default function BallScene() {
     mesh.position.set(wx, wy, 0)
     mesh.scale.setScalar(r * c.s * tmp.hoverScale * (1 + e.hop.squash))
 
+    // Past the summit the boulder is thrown, falls through the dusk and
+    // bursts (descent.js); from here its place on screen is scroll-driven.
+    const dsc = stepDescent({ released: e.ball.released, at: { x: c.x, y: c.y, r: r * c.s }, vw: size.width, vh: size.height })
+    if (dsc.active) {
+      const [tx, ty] = toWorld(dsc.big.x, dsc.big.y)
+      mesh.position.set(tx, ty, 0)
+      mesh.scale.setScalar(dsc.big.r)
+      mesh.visible = dsc.big.visible
+      tmp.dq.setFromAxisAngle(tmp.axis.set(0.3, 0.2, 1).normalize(), -dsc.big.spin)
+      mesh.quaternion.copy(tmp.dq).multiply(tmp.roll)
+    }
+
     // Key light follows the cursor around the ball.
     const p = e.pointer
     if (p.active) {
@@ -351,7 +364,7 @@ export default function BallScene() {
     u.uDoc.value.set(W, H)
     u.uR.value = r
     u.uHeight.value = height
-    u.uOpacity.value = Math.min(1, e.intro * 3) * e.ball.respawn
+    u.uOpacity.value = dsc.active ? 1 : Math.min(1, e.intro * 3) * e.ball.respawn
 
     // Contact shadow: a thin ellipse lying along the slope under the boulder.
     const sh = shadow.current
@@ -360,7 +373,7 @@ export default function BallScene() {
     sh.position.set(gx, gy, -r * 2)
     sh.rotation.z = -Math.atan(slope(bx))
     sh.scale.set(r * 2.3 * spread * g.s, r * 0.42 * spread * g.s, 1)
-    sh.material.opacity = (k / spread) * e.ball.respawn
+    sh.material.opacity = dsc.active ? 0 : (k / spread) * e.ball.respawn
 
     // Ink droplets in flight: they shrink as they fall back toward the page.
     const im = drops.current

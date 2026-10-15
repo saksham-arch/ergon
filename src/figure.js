@@ -1,6 +1,5 @@
 // Sisyphus, as a marble statue cut into separate pieces (public/statue) and
-// rigged as a 2D puppet (hill units, y down), painted into a canvas each frame
-// that the 3D scene shows on a plane beside the boulder. Each piece
+// rigged as a 2D puppet in the hill's SVG (world units, y down). Each piece
 // keeps the pivots it had in its source render: `a` is the joint nearer the
 // body, `b` the next joint down the chain. A piece is placed by pinning `a` to
 // its joint and turning it so a→b lies along the bone.
@@ -9,9 +8,12 @@
 // arms reach for the boulder with two-bone IK. Without the boulder he
 // straightens up and lets his arms hang.
 //
+// The same pose is painted into a small canvas each frame, which the chrome
+// shader samples so the statue shows up in the boulder.
 
 import { ground, slope } from './hill.js'
 
+const SVG_NS = 'http://www.w3.org/2000/svg'
 const S = 0.23 // world units per source px for the limb renders
 const TORSO_K = S * 0.68 // the torso render is shot larger
 const HEAD_K = S * 0.25
@@ -66,8 +68,8 @@ const FEET = -26 // centre of the stride, behind the hip: a long lunge
 const HIP_PUSH = 124
 const HIP_STAND = 146
 // Hip to boulder surface while pushing: far enough that the arms reach out
-// nearly straight, leaving open space between them and the chest.
-const REACH = 166
+// nearly straight, with open space between them and the chest.
+const REACH = 160
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const mix = (a, b, t) => a + (b - a) * t
@@ -106,25 +108,43 @@ const apply = (m, pt, p) => {
 // A bone from `at` pointing along `angle` (radians, y down).
 const bone = (p, at, angle) => place(p, at, angle - p.phi)
 
-export function createFigure() {
+export function createFigure(svg) {
+  const root = svg.querySelector('.figure')
+  const shadow = svg.querySelector('.fig-shadow')
   const imgs = {}
   const loaded = {}
-  for (const [, name] of ORDER) {
-    if (imgs[name]) continue
-    const im = new Image()
-    im.src = `/statue/${name}.webp`
-    im.onload = () => (loaded[name] = true)
-    imgs[name] = im
+  const els = {}
+  for (const [slot, name, far] of ORDER) {
+    const p = PIECES[name]
+    const el = document.createElementNS(SVG_NS, 'image')
+    el.setAttribute('href', `/statue/${name}.webp`)
+    el.setAttribute('width', p.crop[2])
+    el.setAttribute('height', p.crop[3])
+    el.setAttribute('class', far ? 'piece far' : 'piece')
+    el.setAttribute('transform', 'scale(0)') // hidden until the first pose
+    root.appendChild(el)
+    els[slot] = el
+    if (!imgs[name]) {
+      const im = new Image()
+      im.src = `/statue/${name}.webp`
+      im.onload = () => (loaded[name] = true)
+      imgs[name] = im
+    }
   }
   const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = 1024
+  canvas.width = 512
+  canvas.height = 448
   return {
+    root,
+    shadow,
+    els,
     imgs,
     loaded,
     mats: {},
+    last: {},
     canvas,
     ctx: canvas.getContext('2d'),
-    rect: { x: 0, y: 0, w: 380, h: 380 }, // hill area the canvas covers
+    rect: { x: 0, y: 0, w: 420, h: 368 }, // world area the canvas covers
     version: 0,
     phase: 0.06, // at rest: near foot forward, far leg stretched back
     lastHip: null,
@@ -161,9 +181,14 @@ function plantFoot(p, g, tilt) {
 
 // ball: boulder centre (or null when it has rolled away); r: its radius;
 // standX: where to stand when there's no boulder; strain: 0..1 (slipping).
-export function drawFigure(f, { ball, r, standX, strain, dt }) {
+export function drawFigure(f, { ball, r, standX, strain, opacity, dt }) {
+  if (!f.root) return
   f.t += dt
   f.relax += ((ball ? 0 : 1) - f.relax) * Math.min(1, dt * 3)
+  // The moment he lets go, his arms follow the boulder up and over.
+  if (!ball && f.hadBall) f.throwAt = f.t
+  f.hadBall = !!ball
+  const follow = f.throwAt != null ? 1 - Math.min(1, Math.max(0, (f.t - f.throwAt - 0.35) / 1.1)) : 0
   const relax = f.relax
   const P = PIECES
   const M = f.mats
@@ -176,7 +201,7 @@ export function drawFigure(f, { ball, r, standX, strain, dt }) {
   // Lean into the slope, harder while the boulder slips.
   const slopeAng = Math.atan(-slope(hipX)) // > 0 while climbing
   const breathe = Math.sin(f.t * 2.2)
-  const lean = mix(0.74 + slopeAng * 0.45 + strain * 0.12 + breathe * 0.01, 0.06, relax)
+  const lean = mix(0.76 + slopeAng * 0.45 + strain * 0.12 + breathe * 0.01, 0.06, relax)
   const bob = Math.abs(Math.sin(f.phase * Math.PI * 2)) * 2.5 * (1 - relax)
   const hip = { x: hipX, y: ground(hipX) - mix(HIP_PUSH, HIP_STAND, relax) - bob + breathe * 0.4 }
 
@@ -224,11 +249,18 @@ export function drawFigure(f, { ball, r, standX, strain, dt }) {
   ]) {
     const fore = P.restB
     let hand = { x: sh.x + 6, y: sh.y + (upper.len + fore.len) * 0.9 }
+    if (!ball && follow > 0) {
+      const reach = (upper.len + fore.len) * 0.96
+      const up = { x: sh.x + reach * 0.74, y: sh.y - reach * 0.67 }
+      const k = follow * follow * (3 - 2 * follow)
+      hand = { x: mix(hand.x, up.x, k), y: mix(hand.y, up.y, k) }
+    }
     if (ball) {
       const dx = sh.x - ball.x
       const dy = sh.y - ball.y
+      const d = Math.hypot(dx, dy)
       const a = Math.atan2(dy, dx) + off / r
-      const on = { x: ball.x + Math.cos(a) * (r + 2), y: ball.y + Math.sin(a) * (r + 2) }
+      const on = { x: ball.x + Math.cos(a) * (r + 4), y: ball.y + Math.sin(a) * (r + 4) }
       hand = { x: mix(on.x, hand.x, relax), y: mix(on.y, hand.y, relax) }
     }
     const arm = ik(sh, hand, upper.len, fore.len, 1)
@@ -236,22 +268,35 @@ export function drawFigure(f, { ball, r, standX, strain, dt }) {
     M[`${side}Fore`] = bone(fore, arm.joint, arm.a2)
   }
 
-  // Paint the pose: the statue around the hip.
+  // Write the transforms.
+  for (const [slot] of ORDER) {
+    const m = M[slot]
+    const t = `matrix(${m.map((v) => v.toFixed(4)).join(' ')})`
+    if (f.last[slot] !== t) {
+      f.last[slot] = t
+      f.els[slot].setAttribute('transform', t)
+    }
+  }
+  f.shadow.setAttribute('cx', (hipX + 10).toFixed(1))
+  f.shadow.setAttribute('cy', ground(hipX).toFixed(1))
+  f.root.style.opacity = opacity.toFixed(3)
+
+  // Reflection copy: the statue around the hip, for the chrome shader.
   const R = f.rect
-  R.x = hipX - 170
-  R.y = ground(hipX) - 340
+  R.x = hipX - 160
+  R.y = ground(hipX) - 300
   const g = f.ctx
   const sc = f.canvas.width / R.w
   g.setTransform(1, 0, 0, 1, 0, 0)
   g.clearRect(0, 0, f.canvas.width, f.canvas.height)
-  g.imageSmoothingQuality = 'high'
+  g.globalAlpha = opacity
   for (const [slot, name, far] of ORDER) {
     if (!f.loaded[name]) continue
     const m = M[slot]
     const p = PIECES[name]
     g.setTransform(sc, 0, 0, sc, -R.x * sc, -R.y * sc)
     g.transform(...m)
-    g.filter = far ? 'brightness(0.8) sepia(0.15)' : 'none'
+    g.filter = far ? 'brightness(0.86)' : 'none'
     g.drawImage(f.imgs[name], 0, 0, p.crop[2], p.crop[3])
   }
   g.filter = 'none'

@@ -4,7 +4,7 @@
 // summit, then falls away steeply on the far side.
 
 export const H0 = 860
-export const R = 190 // boulder radius: the stone stands well over the man pushing it
+export const R = 168 // boulder radius: the stone stands over the man pushing it
 export const X_START = 1100 // foot of the climb
 export const CLIMB = 3600 // horizontal length of the climb
 export const X_SUMMIT = X_START + CLIMB

@@ -149,9 +149,9 @@ export function measure() {
   // The opening shot frames the statue and boulder like a product hero:
   // the pair fills the left of the screen, copy on the right. On narrow
   // screens the copy sits on top and the pair below it.
-  const GROUP_W = 580 // back foot to the boulder's far edge, world units
-  const GROUP_H = 330
-  const GROUP_C = 140 // the group's centre, this far behind the boulder's
+  const GROUP_W = 640 // back foot to the boulder's far edge, world units
+  const GROUP_H = 356
+  const GROUP_C = 150 // the group's centre, this far behind the boulder's
   const wide = e.vw >= 760
   const hs = wide
     ? Math.min((0.58 * e.vw) / GROUP_W, (0.8 * e.vh) / GROUP_H)
@@ -520,7 +520,7 @@ export function step(dt) {
   if (over !== e.over) {
     e.over = over
     const stage = document.querySelector('.stage')
-    if (stage) stage.style.transform = over ? `translate3d(0, ${-over}px, 0)` : ''
+    if (stage) stage.style.transform = ''
     document.documentElement.classList.toggle('past-climb', over > 0)
   }
   E.world.style.transform = `translate3d(${(e.anchor.x - e.view.x * e.S).toFixed(1)}px, ${(e.anchor.y - e.view.y * e.S).toFixed(1)}px, 0) scale(${e.S})`
