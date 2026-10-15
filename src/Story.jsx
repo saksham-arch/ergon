@@ -6,6 +6,7 @@ import BallScene from './Ball.jsx'
 import { bindPointer, engine, measure } from './engine.js'
 import { CLIMB, R } from './hill.js'
 import VaseHall from './vase/VaseHall.jsx'
+import ExhibitGallery from './world/ExhibitGallery.jsx'
 import Shards from './Shards.jsx'
 import { agora } from './agora/state.js'
 
@@ -74,6 +75,7 @@ function Nav() {
         <nav aria-label="Primary">
           <a href="#wait">The climb</a>
           <a href="#record">The vase</a>
+          <a href="#tools">The tools</a>
           <a href="#craft">{t('craft')}</a>
           <a href="#trust">{t('trust')}</a>
           <a href="#rights">{t('rights')}</a>
@@ -336,6 +338,7 @@ export default function Story() {
       </main>
       <div className="dusk" aria-hidden="true" />
       <VaseHall />
+      <ExhibitGallery />
       <section className="agora-entry"><p>Hermes · The agora</p><h2>Take your skill into the city.</h2><button className="btn btn-clay" onClick={() => agora.show()}>Open the work map →</button></section>
       <Footer />
       <ReflectToggle />

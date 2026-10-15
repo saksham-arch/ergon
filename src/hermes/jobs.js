@@ -49,7 +49,7 @@ const titlesHi = ['दीवार पुट्टी और दो कोट, 2
 const placesHi = ['अंधेरी पूर्व, स्टेशन के पास','जोगेश्वरी बाज़ार सड़क','APMC गेट 3 (नमूना स्थान)','प्लॉट 14, मंदिर के पीछे','पुल के पास, गली 4','गुलमोहर सोसाइटी, B विंग','प्लॉट 14, मंदिर के पीछे','बिज़नेस पार्क, टावर C','शांति नगर, घर 22','स्टेशन रोड','बाज़ार चौक, दुकान 9','हाइवे सर्विस रोड, हब 2','रिवरसाइड टावर, साइट ऑफ़िस','गुलमोहर सोसाइटी, A विंग','बाज़ार सड़क, दुकान 31','गुलमोहर सोसाइटी से उठाना']
 const bringsHi = ['रोलर और स्क्रेपर। पेंट दिया जाएगा।','टेस्टर और अपने हाथ के औज़ार।','दस्ताने। रात 1 बजे चाय और खाना।','करणी और लेवल। हेलमेट दिया जाएगा।','रिंच सेट और थ्रेड टेप।','ड्रिल और प्लेनर। लकड़ी साइट पर है।','बंद जूते।','गेट पास की पहचान शर्त नियोक्ता से पूछें।','करणी। सीमेंट खरीदा है।','सामान दिया जाएगा।','टेस्टर और ड्रिल।','दैनिक भुगतान के लिए UPI वाला फ़ोन।','अपने औज़ार।','सफ़ाई का सामान दिया जाएगा।','वेल्डिंग नहीं, हाथ के औज़ार।','दस्ताने। दोपहर का भोजन दिया जाएगा।']
 const schedulesHi = ['सुबह 8 – शाम 5','सुबह 9 – शाम 6','रात 10 – सुबह 4','सुबह 8 – शाम 5','सुबह 11, लगभग 3 घंटे','सुबह 9 – शाम 6','सुबह 8 – शाम 5','सुबह 9 – शाम 6, रविवार छुट्टी','सुबह 9 – शाम 4','सुबह 8 – शाम 4','दोपहर 2 के बाद','सुबह 7 – दोपहर 3','सुबह 9 – शाम 6','सुबह 9 – शाम 5','सुबह','सुबह 8 – शाम 6']
-export const JOBS = RAW_JOBS.map((j,i) => ({
+const BASE_JOBS = RAW_JOBS.map((j,i) => ({
   ...j, titleHi: titlesHi[i], placeHi: placesHi[i], bringHi: bringsHi[i], hoursHi: schedulesHi[i],
   startDate: dates[i], durationDays: durations[i], hoursCount: hourCounts[i],
   lngLat: [72.8697 + j.x * KM / (111.32 * Math.cos(19.1136 * Math.PI / 180)), 19.1136 - j.z * KM / 110.57],
@@ -57,5 +57,19 @@ export const JOBS = RAW_JOBS.map((j,i) => ({
   fee: i % 4 === 0 ? 0 : null, written: i % 3 === 0 ? true : null,
   verification: j.verified ? 'sample-history' : 'unknown', address: true,
 }))
+// Additional fictional vacancies give every trade a visible cluster of flowers.
+// Keep their coordinates fixed when the worker changes location or filters.
+const EXTRA_JOBS = BASE_JOBS.flatMap((job, i) => [0, 1].map(copy => {
+  const angle = (i * 2.399963 + copy * 1.17)
+  const radius = 0.65 + ((i * 7 + copy * 11) % 20) / 10
+  const x = Math.cos(angle) * radius / KM, z = Math.sin(angle) * radius / KM
+  return {...job, id: `j${17 + i * 2 + copy}`, x, z,
+    employer: `${job.employer} · sample ${copy + 2}`,
+    place: `${copy ? 'Marol' : 'Andheri East'} · example site ${i + 1}`,
+    placeHi: `${copy ? 'मरोल' : 'अंधेरी पूर्व'} · नमूना स्थल ${i + 1}`,
+    lngLat: [DEMO_ORIGIN[0] + x * KM / (111.32 * Math.cos(DEMO_ORIGIN[1] * Math.PI / 180)), DEMO_ORIGIN[1] - z * KM / 110.57],
+  }
+}))
+export const JOBS = [...BASE_JOBS, ...EXTRA_JOBS]
 export const money = (n) => `₹${Number(n).toLocaleString('en-IN')}`
 export const payLine = (j) => `${money(j.pay)} / ${j.unit}`

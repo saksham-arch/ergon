@@ -4,6 +4,8 @@
 // WebGL context and depth buffer, so buildings hide flowers behind them.
 
 import * as maplibregl from 'maplibre-gl'
+import { createAgoraLandmarks } from './landmarks.js'
+import { disposeObject } from '../world/balance.js'
 import {
   AmbientLight,
   BufferAttribute,
@@ -142,6 +144,7 @@ const UP = 1.6 // flower height in model units
 export function createFlowerLayer({ read, colorOf }) {
   let map
   let renderer
+  let animationTimer
   const scene = new Scene()
   const camera = new Camera()
   const root = new Group()
@@ -156,6 +159,9 @@ export function createFlowerLayer({ read, colorOf }) {
   const leafGeo = leaf()
   const flowers = new Map() // id -> { group, head, mat, ring, h }
   const flights = []
+  const landmarks = createAgoraLandmarks(root)
+  let previousTime = performance.now()
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)')
   let origin = null
   let unit = 1 // mercator units per metre at the origin
   const t0 = performance.now()
@@ -205,11 +211,19 @@ export function createFlowerLayer({ read, colorOf }) {
       map = m
       renderer = new WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true })
       renderer.autoClear = false
+      animationTimer = setInterval(() => { if (read().active && !reduced.matches) map.triggerRepaint() }, 1000 / 30)
+    },
+    onRemove() {
+      clearInterval(animationTimer)
+      disposeObject(scene)
+      petalGeo.dispose()
+      leafGeo.dispose()
+      renderer?.dispose()
     },
     // Metres per model unit, so a flower stays about the same size on screen
     // at every zoom.
     scaleFor() {
-      return 230 * Math.pow(2, 15 - map.getZoom())
+      return 92 * Math.pow(2, 15 - map.getZoom())
     },
     screenHeight() {
       const mpp = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / Math.pow(2, map.getZoom())
@@ -220,15 +234,19 @@ export function createFlowerLayer({ read, colorOf }) {
       flights.push({ a: local(fromLngLat), job, t: performance.now() })
     },
     render(gl, args) {
-      const { jobs, selected, hover, sent } = read()
-      if (!origin && jobs.length) {
+      const { jobs, selected, hover, sent = new Set() } = read()
+      if (!origin) {
         const c = map.getCenter()
         origin = maplibregl.MercatorCoordinate.fromLngLat(c, 0)
         unit = origin.meterInMercatorCoordinateUnits()
       }
       if (!origin) return
-      const now = (performance.now() - t0) / 1000
+      const stamp = performance.now()
+      const dt = Math.min(.1, (stamp - previousTime) / 1000)
+      previousTime = stamp
+      const now = reduced.matches ? 0 : (stamp - t0) / 1000
       const k = this.scaleFor()
+      landmarks.update(now, dt, k, local, read().weights, reduced.matches)
       const seen = new Set()
       for (const j of jobs) {
         seen.add(j.id)
@@ -242,13 +260,13 @@ export function createFlowerLayer({ read, colorOf }) {
         const isSel = selected === j.id
         const isHov = hover === j.id
         const tOpen = !j.open ? 0.05 : isSel ? 1.0 : isHov ? 0.94 : 0.8
-        u.uOpen.value += (tOpen - u.uOpen.value) * 0.08
+        u.uOpen.value += (tOpen - u.uOpen.value) * (reduced.matches ? 1 : 0.08)
         u.uTime.value = now + j.x
-        u.uSway.value += ((isSel || isHov ? 1 : 0) - u.uSway.value) * 0.1
+        u.uSway.value += ((isSel || isHov ? 1 : 0) - u.uSway.value) * (reduced.matches ? 1 : 0.1)
         u.uGlow.value += ((isSel ? 1.6 : isHov ? 0.8 : j.open ? 0.25 : 0) - u.uGlow.value) * 0.1
         f.mat.opacity = j.open ? 0.94 : 0.5
         const s = (j.open ? 1 : 0.7) * (isSel ? 1.25 : isHov ? 1.12 : 1)
-        f.scale += (s - f.scale) * 0.12
+        f.scale += (s - f.scale) * (reduced.matches ? 1 : 0.12)
         f.group.scale.setScalar(f.scale * k)
         f.head.position.y = f.h + (isSel ? Math.sin(now * 2.2) * 0.04 : 0)
         f.ring.visible = sent.has(j.id)
@@ -284,6 +302,7 @@ export function createFlowerLayer({ read, colorOf }) {
         fl.mesh.visible = p < 1.25
         if (p > 1.3) {
           root.remove(fl.mesh)
+          disposeObject(fl.mesh)
           flights.splice(i, 1)
         }
       }
@@ -293,7 +312,7 @@ export function createFlowerLayer({ read, colorOf }) {
       camera.projectionMatrix = new Matrix4().fromArray(mm).multiply(l)
       renderer.resetState()
       renderer.render(scene, camera)
-      if (read().active) map.triggerRepaint()
+
     },
   }
 }

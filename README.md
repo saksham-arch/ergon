@@ -28,6 +28,17 @@ Existing artwork and statue pieces from this checkout match the reference checko
 
 The map and gallery are separate chunks. The gallery mounts when approached, pauses off-screen/hidden and renders at a 30 fps budget with capped pixel ratio. These changes reduce unnecessary work but do not establish a measured device frame rate.
 
+## The four tools
+
+The main site and map page both include a permanent sculpture display, reachable
+through “The tools”. Choose Hermes’ winged staff, Hephaestus’ bronze tablet,
+Themis’ balance, or Athena’s owl and scroll. Open the corresponding tool beside
+the sculpture; the card face and balance respond to your local draft. Map landmark
+buttons open the same tools without leaving the map page. “Check terms” on a map
+job opens the balance and loads that example offer. All existing hall exhibits,
+statues and scroll chapters remain in place. Motion pauses outside the viewport;
+reduced-motion users can explore the sculptures without continuous animation.
+
 ## Verification boundary
 
 The world checks cover deterministic throw/split/reverse/mouth alignment/landing and chapters. The domain checks include 112 assertions for date boundaries, pay intervals, invalid and unknown terms, units, persistence failures, local holds, job imports and vase UV picking. A production build checks integration.

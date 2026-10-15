@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { CanvasTexture, SRGBColorSpace } from 'three'
 import { hall, T, smooth } from '../hall.js'
 
-export default function Tablet() {
+export default function Tablet({ standalone = false, reducedMotion = false }) {
   const root = useRef()
   const slab = useRef()
   const face = useRef()
@@ -41,8 +41,8 @@ export default function Tablet() {
   useFrame((state, dt) => {
     const p = hall.p
     const [a, b] = T.chapters[1]
-    const reveal = smooth(a, a + 0.03, p) * (1 - smooth(b - 0.03, b, p))
-    const visible = p > a && p < b && reveal > 0
+    const reveal = standalone ? 1 : smooth(a, a + 0.03, p) * (1 - smooth(b - 0.03, b, p))
+    const visible = standalone || (p > a && p < b && reveal > 0)
     root.current.visible = visible
     const d = drag.current
     if (!visible) {
@@ -70,7 +70,7 @@ export default function Tablet() {
       tex.map.needsUpdate = true
       tex.version = card.version
     }
-    const t = state.clock.elapsedTime
+    const t = reducedMotion ? 0 : state.clock.elapsedTime
     const step = Math.min(dt, 0.1)
     if (!d.on) {
       d.idle += dt
@@ -81,7 +81,7 @@ export default function Tablet() {
         d.velocity *= Math.exp(-4 * step)
       }
     }
-    root.current.position.y = 2.0 - 3 * (1 - reveal) + Math.sin(t * 0.8) * 0.04 * reveal
+    root.current.position.y = (standalone ? 0 : 2.0 - 3 * (1 - reveal)) + Math.sin(t * 0.8) * 0.04 * reveal
     root.current.rotation.y = -0.28 + Math.sin(t * 0.45) * 0.06 + d.offset
     slab.current.opacity = reveal
     face.current.opacity = reveal
@@ -93,9 +93,9 @@ export default function Tablet() {
   return (
     <group
       ref={root}
-      position={[1.55, -1.0, 1.7]}
+      position={standalone ? [0, 0, 0] : [1.55, -1.0, 1.7]}
       rotation-y={-0.28}
-      scale={0.6}
+      scale={standalone ? 0.9 : 0.6}
       visible={false}
       onPointerOver={(e) => {
         e.stopPropagation()

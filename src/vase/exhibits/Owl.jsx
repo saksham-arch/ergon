@@ -60,7 +60,7 @@ function paint(canvas, rights) {
   }
 }
 
-export default function Owl() {
+export default function Owl({ standalone = false }) {
   const root = useRef()
   const head = useRef()
   const eyes = useRef([])
@@ -149,9 +149,9 @@ export default function Owl() {
     const m = motion.current
     const [a, b] = T.chapters[3]
     const p = hall.p
-    const reveal = smooth(a, a + 0.03, p) * (1 - smooth(b - 0.03, b, p))
-    root.current.visible = hall.active && p > a && p < b
-    root.current.position.y = -1.2 - 4.2 * (1 - reveal)
+    const reveal = standalone ? 1 : smooth(a, a + 0.03, p) * (1 - smooth(b - 0.03, b, p))
+    root.current.visible = standalone || (hall.active && p > a && p < b)
+    root.current.position.y = standalone ? -1.1 : -1.2 - 4.2 * (1 - reveal)
     if (!root.current.visible) {
       m.hover = false
       m.manual = null
@@ -163,13 +163,13 @@ export default function Owl() {
       m.version = version
     }
     const s = reduced.current ? 1 : 1 - Math.exp(-Math.min(dt, 0.1) * 9)
-    const target = m.manual ?? smooth(a + 0.02, a + 0.08, p)
+    const target = m.manual ?? (standalone ? 1 : smooth(a + 0.02, a + 0.08, p))
     m.open = mix(m.open, target, s)
     assets.unroll.value = m.open
     roll.current.position.y = -1.4 * m.open
     hit.current.position.y = -0.7 * m.open
     hit.current.scale.y = Math.max(0.1, m.open)
-    const t = state.clock.elapsedTime
+    const t = reduced.current ? 0 : state.clock.elapsedTime
     if (t >= m.next) {
       m.blink = t
       m.next = t + 4 + Math.random() * 3
@@ -191,7 +191,7 @@ export default function Owl() {
   })
 
   return (
-    <group ref={root} position={[2.35, -5.4, -0.5]} visible={false} onPointerDown={stop} onPointerUp={stop} onPointerMove={stop} onClick={stop}>
+    <group ref={root} position={standalone ? [.4, -1.1, 0] : [2.35, -5.4, -0.5]} visible={false} onPointerDown={stop} onPointerUp={stop} onPointerMove={stop} onClick={stop}>
       <mesh position={[0, 0.08, 0]} material={assets.marble} receiveShadow castShadow><boxGeometry args={[0.8, 0.16, 0.7]} /></mesh>
       <mesh position={[0, 0.65, 0]} material={assets.marble} castShadow><cylinderGeometry args={[0.23, 0.28, 0.98, 48]} /></mesh>
       {Array.from({ length: 16 }, (_, i) => {

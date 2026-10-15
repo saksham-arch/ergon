@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict'
+import { Group, Vector3, Box3 } from 'three'
+import { JOBS, TRADES, DEMO_ORIGIN } from '../src/hermes/jobs.js'
+import { DEFAULT_FILTERS, selectJobs, distanceKm } from '../src/domain/jobs.js'
+import { createBalance, disposeObject } from '../src/world/balance.js'
+import { createAgoraLandmarks, LANDMARKS } from '../src/agora/landmarks.js'
+import { checkJob, offerStore } from '../src/domain/offers.js'
+import { PRESETS, weighOffer } from '../src/themis/rules.js'
+assert.equal(JOBS.length,48)
+assert.equal(new Set(JOBS.map(j=>j.id)).size,48)
+for(const job of JOBS){assert.ok(job.lngLat.every(Number.isFinite));assert.ok(job.titleHi&&job.placeHi&&job.hoursHi);assert.ok(job.pay>0)}
+for(const trade of TRADES)assert.ok(selectJobs({...DEFAULT_FILTERS,trade:trade.id}).length>=3,`${trade.id} has multiple nearby flowers`)
+const before=JSON.stringify(JOBS.map(j=>j.lngLat))
+assert.equal(selectJobs({...DEFAULT_FILTERS,origin:[0,0]}).length,0,'jobs do not follow a relocated worker')
+assert.equal(JSON.stringify(JOBS.map(j=>j.lngLat)),before)
+const balance=createBalance()
+for(const [preset,sign] of [['fair',1],['scam',-1]]){
+ const weights=weighOffer(PRESETS[preset])
+ for(let n=0;n<300;n++)balance.update(n/30,1/30,weights.fair,weights.risk)
+ assert.equal(Math.sign(balance.beam.rotation.z),sign,`${preset} tilts the shared balance correctly`)
+ assert.equal(balance.coins.filter(c=>c.visible).length,Math.min(12,weights.fair)+Math.min(12,weights.risk))
+ assert.ok(balance.pans.every(p=>p.position.toArray().every(Number.isFinite)))
+}
+balance.update(20,0,4,2,true)
+assert.equal(balance.coins[0].position.y,.035,'reduced-motion coins settle without animation')
+const group=new Group(),landmarks=createAgoraLandmarks(group)
+assert.equal(landmarks.items.length,4)
+assert.equal(new Set(LANDMARKS.map(x=>x.id)).size,4)
+for(const x of LANDMARKS)assert.ok(distanceKm(DEMO_ORIGIN,x.lngLat)<2,'tool landmarks stay in the demo area')
+landmarks.update(1,1/30,92,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},false)
+for(const item of landmarks.items){assert.ok(item.group.children.length>1);assert.ok(!new Box3().setFromObject(item.group).isEmpty())}
+let opened=null
+globalThis.location={hash:'#map'}
+globalThis.window={dispatchEvent:event=>{opened=event.detail}}
+checkJob(JOBS[20])
+assert.equal(opened,'trust','map offer checker opens its local 3D balance')
+assert.equal(location.hash,'#map','checking terms keeps the map route')
+assert.equal(offerStore.getSnapshot().data.source,JOBS[20].id)
+disposeObject(balance.root);disposeObject(group)
+console.log('Agora checks passed: 48 stable job locations, all trades, filters, four map landmarks, shared balance and reduced motion.')

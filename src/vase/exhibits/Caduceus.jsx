@@ -116,7 +116,7 @@ function Medallion({ job, index, reduced, active }) {
   )
 }
 
-export default function Caduceus() {
+export default function Caduceus({ standalone = false }) {
   const root = useRef()
   const wings = useRef([])
   const light = useRef()
@@ -173,17 +173,17 @@ export default function Caduceus() {
   useFrame((state) => {
     const p = hall.p
     const [a, b] = T.chapters[0]
-    const reveal = smooth(a, a + 0.03, p) * (1 - smooth(b - 0.03, b, p))
-    active.current = hall.active && p > a && p < b && reveal > 0
+    const reveal = standalone ? 1 : smooth(a, a + 0.03, p) * (1 - smooth(b - 0.03, b, p))
+    active.current = standalone || (hall.active && p > a && p < b && reveal > 0)
     root.current.visible = active.current
-    root.current.position.y = -1.2 - 4.2 * (1 - reveal)
+    root.current.position.y = standalone ? -2.2 : -1.2 - 4.2 * (1 - reveal)
     const t = reduced.current ? 0 : state.clock.elapsedTime
     for (let i = 0; i < 2; i++) wings.current[i].rotation.y = (i === 0 ? -1 : 1) * Math.sin(t * TAU * 0.6) * 0.08
     light.current.intensity = active.current ? (0.55 + Math.sin(t * 0.9) * 0.08) * reveal : 0
   }, -1)
 
   return (
-    <group ref={root} position={[-2.45, -5.4, -0.6]} visible={false}>
+    <group ref={root} position={standalone ? [0, -2.2, 0] : [-2.45, -5.4, -0.6]} visible={false}>
       <mesh position={[0, 0.09, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.02, 0.18, 1.02]} />
         <primitive object={geometry.marble} attach="material" />
