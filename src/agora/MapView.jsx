@@ -56,8 +56,8 @@ export default function MapView(props){
       landmarks.push(marker)
      }
      const resizeTargets=()=>{
-      const height=Math.max(32,Math.min(260,(layer?.screenHeight()??50)*1.1))
-      for(const marker of landmarks){const el=marker.getElement();el.style.width=`${Math.max(32,height*.65)}px`;el.style.height=`${height}px`;el.style.minHeight='0';marker.setOffset([0,0])}
+      const height=Math.max(60,Math.min(160,(layer?.screenHeight()??50)*1.1))
+      for(const marker of landmarks){const el=marker.getElement();el.style.width=`${Math.max(56,Math.min(96,height*.65))}px`;el.style.height=`${height}px`;el.style.minHeight='0';marker.setOffset([0,0])}
      }
      map.on('zoomstart',()=>landmarks.forEach(marker=>marker.setDraggable(false)))
      map.on('zoomend',()=>{landmarks.forEach(marker=>marker.setDraggable(true));resizeTargets()})
@@ -68,11 +68,7 @@ export default function MapView(props){
      clearTimeout(timer);state.current.active=!document.hidden&&!!state.current.inView;setStatus('ready');map.jumpTo({center:state.current.origin,zoom:15.6,pitch:52,bearing:-20,padding:sidebarPadding()})
     }catch{fail()}
    })
-   const pick=point=>{
-    const height=layer?.screenHeight()??0;let closest=null,dist=16
-    for(const j of state.current.jobs){const base=map.project(j.lngLat),vy=-height*.85;const t=Math.max(0,Math.min(1,((point.y-base.y)*vy)/(vy*vy||1)));const d=Math.hypot(point.x-base.x,point.y-(base.y+vy*t))-(t>.75?7:0);if(d<dist){dist=d;closest=j.id}}
-    return closest
-   }
+   const pick=point=>layer?.pick(point)??null
    map.on('mousemove',e=>{state.current.hover=pick(e.point);map.getCanvas().style.cursor=state.current.hover?'pointer':'';map.triggerRepaint()})
    map.on('click',e=>{const id=pick(e.point);if(id)state.current.onSelect(id)})
    const visibility=()=>{state.current.active=!document.hidden&&state.current.inView; if(state.current.active)map.triggerRepaint()}

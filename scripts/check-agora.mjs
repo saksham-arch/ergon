@@ -1,3 +1,4 @@
+import { pickFlower } from '../src/agora/picking.js'
 import assert from 'node:assert/strict'
 import { Group, Vector3, Box3 } from 'three'
 import { JOBS, TRADES, DEMO_ORIGIN } from '../src/hermes/jobs.js'
@@ -52,3 +53,9 @@ assert.equal(location.hash,'#trust','offer review uses the single original tool 
 assert.equal(offerStore.getSnapshot().data.source,JOBS[20].id)
 disposeObject(balance.root);disposeObject(group)
 console.log('Agora checks passed: 160 stable job locations, all trades, filters, 39 real and demo landmarks, shared balance and reduced motion.')
+
+const targets=[{id:'first',base:{x:100,y:200},head:{x:90,y:120},radius:12},{id:'second',base:{x:140,y:200},head:{x:145,y:105},radius:15}]
+assert.equal(pickFlower({x:92,y:118},targets),'first')
+assert.equal(pickFlower({x:147,y:108},targets),'second','tapping a different bloom selects that job')
+assert.equal(pickFlower({x:96,y:170},targets),'first','stem taps work too')
+assert.equal(pickFlower({x:500,y:500},targets),null)

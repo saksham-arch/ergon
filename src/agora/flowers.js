@@ -1,3 +1,4 @@
+import { pickFlower } from './picking.js'
 import { DEMO_ORIGIN } from '../hermes/jobs.js'
 // A three.js layer drawn inside the MapLibre map: one glass-petalled flower
 // per job, standing on the real street where the work is, and the small
@@ -160,6 +161,7 @@ export function createFlowerLayer({ read, colorOf }) {
   const leafGeo = leaf()
   const flowers = new Map() // id -> { group, head, mat, ring, h }
   const flights = []
+  let hitTargets=[]
   const landmarks = createAgoraLandmarks(root)
   let previousTime = performance.now()
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
@@ -229,6 +231,7 @@ export function createFlowerLayer({ read, colorOf }) {
       const mpp = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / Math.pow(2, map.getZoom())
       return ((this.scaleFor() * UP * 1.18) / mpp) * Math.sin((map.getPitch() * Math.PI) / 180)
     },
+    pick(point){return pickFlower(point,hitTargets)},
     send(fromLngLat, job) {
       if (!origin || reduced.matches) return
       map.stop()
@@ -316,6 +319,18 @@ export function createFlowerLayer({ read, colorOf }) {
       const mm = args?.defaultProjectionData?.mainMatrix ?? args
       const l = new Matrix4().makeTranslation(origin.x, origin.y, origin.z).scale(new Vector3(unit, -unit, unit)).multiply(new Matrix4().makeRotationX(Math.PI / 2))
       camera.projectionMatrix = new Matrix4().fromArray(mm).multiply(l)
+      scene.updateMatrixWorld(true)
+      const width=map.getCanvas().clientWidth,height=map.getCanvas().clientHeight
+      const project=v=>{v.applyMatrix4(camera.projectionMatrix);return {x:(v.x+1)*width/2,y:(1-v.y)*height/2,z:v.z}}
+      hitTargets=[]
+      for(const [id,f] of flowers){
+       if(!f.group.visible)continue
+       const base=project(f.group.getWorldPosition(new Vector3()))
+       const head=project(f.head.getWorldPosition(new Vector3()))
+       const edge=project(f.head.localToWorld(new Vector3(.45,0,0)))
+       if(head.z < -1 || head.z > 1)continue
+       hitTargets.push({id,base,head,radius:Math.min(60,Math.hypot(edge.x-head.x,edge.y-head.y))})
+      }
       renderer.resetState()
       renderer.render(scene, camera)
 
