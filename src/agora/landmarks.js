@@ -27,8 +27,8 @@ export function createAgoraLandmarks(parent) {
  const worker=sisyphus();worker.root.scale.setScalar(.6);worker.root.position.set(-.4,0,0)
  const start=new Group();root.add(start);start.add(worker.root);boulder(start,[.7,.63,0],.63)
  const center={lngLat:DEMO_ORIGIN,group:start}
- return {root,items,update(time,dt,scale,local,weights,reduced){
-  for(const item of items){item.group.position.copy(local(item.lngLat));item.group.scale.setScalar(scale*(item.copy===0?.85:.6))}
+ return {root,items,update(time,dt,scale,local,weights,reduced,positions={}){
+  for(const item of items){item.group.position.copy(local(positions[item.id]??item.lngLat));item.group.scale.setScalar(scale*.55)}
   center.group.position.copy(local(center.lngLat));center.group.scale.setScalar(scale*.7)
   messenger.animate(reduced?0:time);smith.animate(reduced?0:time);guardian.animate(reduced?0:time);worker.animate(reduced?0:time)
   balance.update(time,reduced?0:dt,weights?.fair??0,weights?.risk??0,reduced)

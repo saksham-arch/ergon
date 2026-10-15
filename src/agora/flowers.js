@@ -220,10 +220,9 @@ export function createFlowerLayer({ read, colorOf }) {
       leafGeo.dispose()
       renderer?.dispose()
     },
-    // Metres per model unit, so a flower stays about the same size on screen
-    // at every zoom.
+    // Fixed metres per model unit: models belong to the map, without zoom rescaling.
     scaleFor() {
-      return 92 * Math.pow(2, 15 - map.getZoom())
+      return 48
     },
     screenHeight() {
       const mpp = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / Math.pow(2, map.getZoom())
@@ -247,7 +246,7 @@ export function createFlowerLayer({ read, colorOf }) {
       previousTime = stamp
       const now = reduced.matches ? 0 : (stamp - t0) / 1000
       const k = this.scaleFor()
-      landmarks.update(now, dt, k, local, read().weights, reduced.matches)
+      landmarks.update(now, dt, k, local, read().weights, reduced.matches, read().landmarkPositions)
       const seen = new Set()
       for (const j of jobs) {
         seen.add(j.id)

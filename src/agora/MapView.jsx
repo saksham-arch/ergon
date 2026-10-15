@@ -13,7 +13,7 @@ maplibregl.setWorkerUrl(workerUrl)
 function ring([lng,lat],km){const coordinates=Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2;return [lng+Math.cos(a)*km/(111.32*Math.cos(lat*Math.PI/180)),lat+Math.sin(a)*km/110.57]});return {type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[coordinates]}}}
 export default function MapView(props){
  const {t,lang}=useI18n(), box=useRef(),mapRef=useRef(),markerRef=useRef(),layerRef=useRef(),previousInterest=useRef(props.interest),state=useRef(),[status,setStatus]=useState('loading')
- state.current={...state.current,...props,jobs:props.jobs.map(j=>({...j,open:true})),sent:new Set(Object.keys(props.interest)),me:props.origin,hover:state.current?.hover??null}
+ state.current={...state.current,...props,jobs:props.jobs.map(j=>({...j,open:true})),sent:new Set(Object.keys(props.interest)),me:props.origin,landmarkPositions:state.current?.landmarkPositions??{},hover:state.current?.hover??null}
  useEffect(()=>{
   let map,dead=false,timer,layer,observer
   const landmarks=[]
@@ -36,8 +36,14 @@ export default function MapView(props){
      for(const landmark of LANDMARKS){
       const button=document.createElement('button');button.type='button';button.className='map-landmark';button.textContent=''
       button.setAttribute('aria-label',`${lang==='hi'?landmark.hi:landmark.name} · ${lang==='hi'?'स्थान देखें':'View place'}`)
-      button.addEventListener('click',e=>{e.stopPropagation();state.current.onPlaceSelect(landmark)})
-      landmarks.push(new maplibregl.Marker({element:button,anchor:'bottom',offset:[0,-45]}).setLngLat(landmark.lngLat).addTo(map))
+      let draggedAt=0
+      const marker=new maplibregl.Marker({element:button,anchor:'bottom',offset:[0,-10],draggable:true}).setLngLat(state.current.landmarkPositions[landmark.id]??landmark.lngLat).addTo(map)
+      const movedPlace=()=>({...landmark,lngLat:state.current.landmarkPositions[landmark.id]??landmark.lngLat,moved:!!state.current.landmarkPositions[landmark.id]})
+      button.addEventListener('click',e=>{e.stopPropagation();if(performance.now()-draggedAt>250)state.current.onPlaceSelect(movedPlace())})
+      marker.on('dragstart',()=>{button.style.cursor='grabbing'})
+      marker.on('drag',()=>{const p=marker.getLngLat();state.current.landmarkPositions[landmark.id]=[p.lng,p.lat];map.triggerRepaint()})
+      marker.on('dragend',()=>{draggedAt=performance.now();button.style.cursor='grab'})
+      landmarks.push(marker)
      }
      const el=document.createElement('div');el.className='map-origin';el.setAttribute('aria-hidden','true')
      markerRef.current=new maplibregl.Marker({element:el,draggable:true}).setLngLat(state.current.origin).addTo(map)
@@ -73,5 +79,5 @@ export default function MapView(props){
  useEffect(()=>{mapRef.current?.jumpTo({center:props.origin})},[props.origin])
  useEffect(()=>{if(props.selectedPlace)mapRef.current?.jumpTo({center:props.selectedPlace.lngLat,zoom:15,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300}})},[props.selectedPlace,status])
  useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300},zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
- return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ = वास्तविक स्थान':'Flowers = demo work · Idols = real places · Approximate positions'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
+ return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ खींचें · जानकारी के लिए चुनें':'Flowers = demo work · Drag idols to move · Click for details'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
 }

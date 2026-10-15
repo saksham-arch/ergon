@@ -25,16 +25,21 @@ for(const [preset,sign] of [['fair',1],['scam',-1]]){
 balance.update(20,0,4,2,true)
 assert.equal(balance.coins[0].position.y,.035,'reduced-motion coins settle without animation')
 const group=new Group(),landmarks=createAgoraLandmarks(group)
-assert.equal(landmarks.items.length,7)
-assert.equal(new Set(LANDMARKS.map(x=>x.id)).size,7)
+assert.equal(landmarks.items.length,23)
+assert.equal(new Set(LANDMARKS.map(x=>x.id)).size,23)
 assert.equal(new Set(LANDMARKS.map(x=>x.kind)).size,4)
-for(const x of LANDMARKS){assert.ok(distanceKm(DEMO_ORIGIN,x.lngLat)<20);assert.ok(x.address&&x.description&&x.source.startsWith('https://'));assert.ok(x.lngLat.every(Number.isFinite))}
+for(const x of LANDMARKS){assert.ok(distanceKm(DEMO_ORIGIN,x.lngLat)<20);assert.ok(x.address&&x.description&&(x.demo||x.source.startsWith('https://')));assert.ok(x.lngLat.every(Number.isFinite))}
 landmarks.update(1,1/30,92,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},false)
 for(const item of landmarks.items){assert.ok(item.group.children.length>1);assert.ok(!new Box3().setFromObject(item.group).isEmpty())}
+const moved=LANDMARKS[0]
+landmarks.update(2,1/30,48,([lng,lat])=>new Vector3(lng,0,lat),{fair:4,risk:2},false,{[moved.id]:[72.9,19.2]})
+assert.deepEqual(landmarks.items[0].group.position.toArray(),[72.9,0,19.2],'dragged marker moves the sculpture')
+assert.ok(LANDMARKS.filter(p=>p.demo).length===16)
+for(const kind of ['work','craft','trust','rights'])assert.equal(LANDMARKS.filter(p=>p.demo&&p.kind===kind).length,4)
 globalThis.location={hash:'#map'}
 globalThis.requestAnimationFrame=()=>{}
 checkJob(JOBS[20])
 assert.equal(location.hash,'#trust','offer review uses the single original tool in the vase')
 assert.equal(offerStore.getSnapshot().data.source,JOBS[20].id)
 disposeObject(balance.root);disposeObject(group)
-console.log('Agora checks passed: 96 stable job locations, all trades, filters, 7 sourced real-place landmarks, shared balance and reduced motion.')
+console.log('Agora checks passed: 96 stable job locations, all trades, filters, 23 real and demo landmarks, shared balance and reduced motion.')
