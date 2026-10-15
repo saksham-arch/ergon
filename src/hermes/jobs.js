@@ -70,7 +70,8 @@ const EXTRA_JOBS = BASE_JOBS.flatMap((job, i) => [0, 1].map(copy => {
     lngLat: [DEMO_ORIGIN[0] + x * KM / (111.32 * Math.cos(DEMO_ORIGIN[1] * Math.PI / 180)), DEMO_ORIGIN[1] - z * KM / 110.57],
   }
 }))
-const MORE_JOBS = [...BASE_JOBS,...EXTRA_JOBS].map((job,i)=>{
+const MORE_JOBS = Array.from({length:112},(_,i)=>{
+ const job=[...BASE_JOBS,...EXTRA_JOBS][i%48]
  const government=i%3===0,angle=i*2.399963+.7,radius=.45+(i%29)/10
  const lngLat=[DEMO_ORIGIN[0]+Math.cos(angle)*radius/(111.32*Math.cos(DEMO_ORIGIN[1]*Math.PI/180)),DEMO_ORIGIN[1]+Math.sin(angle)*radius/110.57]
  return {...job,id:`j${49+i}`,sector:government?'government':'private',lngLat,

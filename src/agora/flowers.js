@@ -222,7 +222,7 @@ export function createFlowerLayer({ read, colorOf }) {
     },
     // Fixed metres per model unit: models belong to the map, without zoom rescaling.
     scaleFor() {
-      return 48
+      return 64
     },
     screenHeight() {
       const mpp = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / Math.pow(2, map.getZoom())
