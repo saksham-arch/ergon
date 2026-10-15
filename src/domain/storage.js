@@ -11,7 +11,7 @@ export function createLocalStore(key, defaults, validate = () => true) {
       const saved = JSON.parse(raw)
       if (saved.version === 1 && validate(saved.data)) { data = saved.data; status = 'saved' }
       else status = 'recovered'
-    }
+    } else if(raw) status='recovered'
   } catch { status = 'unavailable' }
   let snapshot = { data, status }
   const listeners = new Set()

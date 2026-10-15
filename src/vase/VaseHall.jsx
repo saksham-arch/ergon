@@ -71,6 +71,7 @@ const CHAPTERS = [
 export default function VaseHall() {
   const {t,lang}=useI18n()
   const [expanded,setExpanded]=useState(-1)
+  const [failed,setFailed]=useState(false)
   const [reduced,setReduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches)
   useEffect(()=>{const m=matchMedia('(prefers-reduced-motion: reduce)');const changed=()=>setReduced(m.matches);m.addEventListener('change',changed);return()=>m.removeEventListener('change',changed)},[])
   const sec = useRef()
@@ -131,7 +132,7 @@ export default function VaseHall() {
 
       for (const f of fades) {
         const editing=f.el.contains(document.activeElement) && document.activeElement.matches('input, textarea, select')
-        const a = f.el.classList.contains('expanded') || editing ? 1 : Math.round(span(p, f.a, f.b) * 1000) / 1000
+        const a = sec.current.classList.contains('static-hall') || f.el.classList.contains('expanded') || editing ? 1 : Math.round(span(p, f.a, f.b) * 1000) / 1000
         f.el.inert = a <= 0.5
         if (a === f.last) continue
         f.last = a
@@ -210,7 +211,8 @@ export default function VaseHall() {
   }
   useEffect(() => {
     const key = (e) => {
-      if (!hall.active || hall.p < T.kept[1] || e.target.closest?.('input, select, textarea')) return
+      if(e.key==='Escape'){setExpanded(-1);hall.onSelect?.(-1);return}
+      if (!hall.active || hall.p < T.kept[1] || e.target.closest?.('input, select, textarea, button, a')) return
       if (e.key === 'ArrowRight') stepFigure(1)
       else if (e.key === 'ArrowLeft') stepFigure(-1)
       else if (e.key === 'Escape') {hall.onSelect?.(-1);setExpanded(-1)}
@@ -231,13 +233,13 @@ export default function VaseHall() {
   const sel = selected >= 0 ? FIGURES[selected] : null
 
   return (
-    <section id="record" className={`hall ${reduced ? "static-hall" : ""}`} ref={sec} aria-label="Ergon, told on a vase">
+    <section id="record" className={`hall ${reduced || failed ? "static-hall" : ""}`} ref={sec} aria-label="Ergon, told on a vase">
       {[['work', T.chapters[0][0] + 0.05], ['craft', T.chapters[1][0] + 0.05], ['trust', T.chapters[2][0] + 0.05], ['rights', T.chapters[3][0] + 0.05], ['coda', T.coda[0] + 0.04]].map(([id, p]) => (
         <span key={id} id={id} className="hall-anchor" style={{ top: `calc(${p} * (100% - 100vh))` }} />
       ))}
       <div className={`hall-stage ${hover >= 0 ? 'pointing' : ''}`} ref={stage}>
         <div className="hall-gl" ref={gl} aria-hidden="true">
-          <SceneBoundary fallback={<img className="gallery-fallback" src="/art/wall.jpg" alt="Painted Greek gallery"/>}>
+          <SceneBoundary onError={()=>setFailed(true)} fallback={<img className="gallery-fallback" src="/art/wall.jpg" alt="Painted Greek gallery"/>}>
           {loaded && !reduced && <Canvas
             shadows
             dpr={[1, 1.25]}

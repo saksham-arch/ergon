@@ -397,6 +397,7 @@ export function bindPointer() {
     p.active = true
   }
   const down = (ev) => {
+    if(ev.target.closest?.('button,a,input,select,textarea,label,.panel,.drawer')) return
     move(ev)
     if (e.hover) e.press = true
   }

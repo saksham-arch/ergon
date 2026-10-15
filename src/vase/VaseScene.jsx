@@ -1,3 +1,4 @@
+import {figureAtUV,isTap} from './picking.js'
 import InheritedGallery from '../world/InheritedGallery.jsx'
 // The hall: one amphora on a plinth in a dark gallery, lit from above. It is
 // the site's second act. Boulders fall into it, its frieze paints itself in,
@@ -222,13 +223,7 @@ function Vase() {
     ]
   }, [ready])
 
-  const pick = (e) => {
-    const uv = e.uv
-    if (!uv || !hall.ranges) return -1
-    const [a, b] = [uniforms.uFrieze.value.x, uniforms.uFrieze.value.y]
-    if (uv.y < a || uv.y > b) return -1
-    return hall.ranges.findIndex(([u0, u1]) => uv.x >= u0 && uv.x < u1)
-  }
+  const pick = e => figureAtUV(e.uv,hall.ranges,[uniforms.uFrieze.value.x,uniforms.uFrieze.value.y])
 
   useFrame((state, dt) => {
     const g = group.current
@@ -308,7 +303,7 @@ function Vase() {
   return (
     <group ref={group}>
       {FIGURES.map((f, i) => (
-        <mesh key={f.id} ref={(el) => (spots.current[i] = el)} visible={false} renderOrder={7}>
+        <mesh key={f.id} ref={(el) => (spots.current[i] = el)} onClick={e=>{if(!isTap(e.delta,hall.drag.moved))return;e.stopPropagation();hall.onSelect?.(i)}} visible={false} renderOrder={7}>
           <ringGeometry args={[0.55, 1, 40]} />
           <meshBasicMaterial color="#ffd08a" transparent opacity={0.6} depthWrite={false} blending={AdditiveBlending} toneMapped={false} />
         </mesh>
@@ -332,7 +327,7 @@ function Vase() {
           }
         }}
         onClick={(e) => {
-          if (e.delta > 6 || hall.drag.moved > 6) return
+          if (!isTap(e.delta,hall.drag.moved)) return
           e.stopPropagation()
           const i = pick(e)
           if (i >= 0) hall.onSelect?.(i)

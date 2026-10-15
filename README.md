@@ -1,48 +1,35 @@
 # Ergon
 
-**The record of everyday work.** A concept site for *Beyond the Waiting Line*:
-helping India's daily-wage workers find work nearby, show their skill
-without a résumé, trust the terms before they commit, and reach what
-they're owed.
-
-*Ergon* (ἔργον) is Greek for work, and for the deed done.
-
-## The connected world
-
-Scroll up the hillside with Sisyphus, then follow the thrown chrome sphere as
-it splits into 28 smaller boulders and falls into the amphora. The transition
-is rendered in code and reverses with the scroll; no video is needed.
-
-Inside the colonnaded hall, four chapters connect a 3D exhibit to a tool:
-Hermes finds work, Hephaestus makes a downloadable PNG work card, Themis
-weighs offer terms, and Athena explores schemes and prepares a downloadable
-wage-reminder draft. The chapter rail skips directly between tools. Turn the
-vase or use the worker strip to open records. In the final hall scene, tap
-“Throw a day of work” to launch a physics boulder.
-
-The hall opens into a scroll-driven descent onto a MapLibre street map.
-Glass flowers represent example jobs around Andheri, Mumbai. Filter the list,
-open full terms, drag your location marker, or opt into geolocation. Distances
-and walking times are estimates. Geolocation never moves example jobs to
-pretend they are local vacancies. Map tiles require a network connection;
-the job list remains available when the map cannot load.
-
-Saving example work and sending word are session-only demo interactions.
-No employer is contacted. Wage reminders are local drafts and are not filed.
+A frontend demonstration for workers to find sample work, describe their skills, check an offer and explore support. The original Sisyphus climb, chrome ball, descent into the amphora and interactive vase remain the main experience.
 
 ## Run
 
-```bash
+```sh
 npm install
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5188 --strictPort
+npm run check
+node scripts/check-domain.mjs
+npm run build
 ```
 
-All people, jobs and rates are mock data. Scheme rules are summarised from
-public scheme pages; check them at a Common Service Centre.
+The four tools remain inside the vase gallery at `#work`, `#craft`, `#trust` and `#rights`. Each panel has an expand control. `#map` opens the separate agora: the original Three.js flower markers on a pitched MapLibre city, with shared filters, selectable jobs and a compact list. The list works when map resources fail. Distances are approximate straight-line distances, never walking routes.
 
-## Verification
+## What works locally
 
-`npm run check` verifies deterministic split/reversal/landing, projected mouth
-alignment, chapter selection and offer presets. `npm run build` checks the
-production bundle. These checks do not establish physical-device frame rate,
-camera/microphone access, speech voices or live employer services.
+- Fixed sample jobs around Andheri, Mumbai, with a labelled demo date of 15 October 2026. Location changes only your origin. Interest and one expiring 30-minute demo hold persist in browser storage; no employer is contacted and nothing is reserved.
+- A personal work-card draft, explicit skills, all eleven spoken-language options, optional photographs and a 12-second voice recording. Fields use versioned localStorage; photo/audio blobs use IndexedDB. A readable canvas preview and the bronze tablet share the same generated card. PNG export does not include audio or endorsements.
+- The offer checker preserves selected-job units and unknown terms. It uses sample daily benchmarks, not legal minimums, and keeps upfront-fee warnings prominent. Presets can be undone.
+- Scheme suggestions show qualifications still to check and official sources. Aadhaar is a readiness question only; no identity number is collected. Wage reminders are editable local drafts with print and text download. Nothing is sent or filed.
+- English/Hindi primary controls, optional speech, keyboard-accessible vase records and reduced-motion gallery layout. Browser voice availability varies.
+
+## Artwork and 3D integration
+
+Existing artwork and statue pieces from this checkout match the reference checkout under `testfolder/ergon`. The hero now uses the prior painted environment backdrop. Selected original procedural temples, trees, Hephaestus and Athena models from `origin/b_proto_v2` commit `492288f` are integrated into the existing gallery renderer. The original ball is unchanged. See `docs/PROTOTYPE_CREDITS.md` for upstream provenance; the upstream scanned kouros and separate cinematic application are not loaded here.
+
+The map and gallery are separate chunks. The gallery mounts when approached, pauses off-screen/hidden and renders at a 30 fps budget with capped pixel ratio. These changes reduce unnecessary work but do not establish a measured device frame rate.
+
+## Verification boundary
+
+The world checks cover deterministic throw/split/reverse/mouth alignment/landing and chapters. The domain checks include 112 assertions for date boundaries, pay intervals, invalid and unknown terms, units, persistence failures, local holds, job imports and vase UV picking. A production build checks integration.
+
+Browser/computer testing was stopped at the user's request. Real-device layout, keyboard, camera/microphone, map-network and live 3D interaction acceptance remains separate from those code checks. See `docs/IMPLEMENTATION_STATUS.md` for the implementation ledger.

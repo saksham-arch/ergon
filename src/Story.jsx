@@ -178,6 +178,7 @@ function World() {
 function ReflectToggle() {
   const [state, setState] = useState('off') // off | asking | on | denied
   const stream = useRef(null)
+  const mounted = useRef(true)
 
   const stop = () => {
     stream.current?.getTracks().forEach((t) => t.stop())
@@ -185,7 +186,7 @@ function ReflectToggle() {
     engine.cam = null
   }
 
-  useEffect(() => stop, [])
+  useEffect(() => { mounted.current=true;return()=>{mounted.current=false;stop()} }, [])
 
   const toggle = async () => {
     if (state === 'asking') return
@@ -200,12 +201,14 @@ function ReflectToggle() {
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       })
+      if(!mounted.current){s.getTracks().forEach(t=>t.stop());return}
       stream.current = s
       const video = document.createElement('video')
       video.muted = true
       video.playsInline = true
       video.srcObject = s
       await video.play()
+      if(!mounted.current){s.getTracks().forEach(t=>t.stop());return}
       stream.current = s
       engine.cam = { video, aspect: video.videoWidth / video.videoHeight || 4 / 3 }
       setState('on')
