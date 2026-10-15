@@ -39,7 +39,12 @@ export default function MapView(props){
       let draggedAt=0
       const marker=new maplibregl.Marker({element:button,anchor:'bottom',offset:[0,-10],draggable:true}).setLngLat(state.current.landmarkPositions[landmark.id]??landmark.lngLat).addTo(map)
       const movedPlace=()=>({...landmark,lngLat:state.current.landmarkPositions[landmark.id]??landmark.lngLat,moved:!!state.current.landmarkPositions[landmark.id]})
-      button.addEventListener('click',e=>{e.stopPropagation();if(performance.now()-draggedAt>250)state.current.onPlaceSelect(movedPlace())})
+      button.addEventListener('click',e=>{e.stopPropagation();if(performance.now()-draggedAt>250)state.current.onPlaceSelect({...movedPlace(),preserveCamera:true})})
+      button.addEventListener('dblclick',e=>{
+       e.preventDefault();e.stopPropagation()
+       if(performance.now()-draggedAt<=250)return
+       state.current.onPlaceSelect({...movedPlace(),focusZoom:17})
+      })
       marker.on('dragstart',()=>{button.style.cursor='grabbing'})
       marker.on('drag',()=>{const p=marker.getLngLat();state.current.landmarkPositions[landmark.id]=[p.lng,p.lat];map.triggerRepaint()})
       marker.on('dragend',()=>{draggedAt=performance.now();button.style.cursor='grab'})
@@ -77,7 +82,7 @@ export default function MapView(props){
   previousInterest.current=props.interest
  },[props.interest])
  useEffect(()=>{mapRef.current?.jumpTo({center:props.origin})},[props.origin])
- useEffect(()=>{if(props.selectedPlace)mapRef.current?.jumpTo({center:props.selectedPlace.lngLat,zoom:15,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300}})},[props.selectedPlace,status])
+ useEffect(()=>{if(props.selectedPlace&&!props.selectedPlace.preserveCamera)mapRef.current?.easeTo({center:props.selectedPlace.lngLat,zoom:props.selectedPlace.focusZoom??15,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:550,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300}})},[props.selectedPlace,status])
  useEffect(()=>{const j=props.jobs.find(j=>j.id===props.selected);if(j)mapRef.current?.jumpTo({center:j.lngLat,padding:window.innerWidth>760?{left:380,right:0,top:0,bottom:0}:{left:0,right:0,top:0,bottom:300},zoom:Math.max(14,mapRef.current.getZoom())})},[props.selected])
- return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ खींचें · जानकारी के लिए चुनें':'Flowers = demo work · Drag idols to move · Click for details'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
+ return <div className="map-shell"><div ref={box} className="map-surface" role="region" aria-label={t('mapTitle')}/><p className="map-sculpture-key">{lang==='hi'?'फूल = नमूना काम · मूर्तियाँ खींचें · जानकारी के लिए चुनें':'Flowers = demo work · Drag to move · Click for details · Double-click to zoom'}</p>{status!=='ready'&&<div className="map-status" role="status"><p>{t(status==='failed'?'mapFailed':'mapLoading')}</p>{status==='failed'&&<button onClick={props.onRetry}>{t('retry')}</button>}</div>}</div>
 }
