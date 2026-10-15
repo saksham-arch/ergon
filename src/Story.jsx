@@ -124,6 +124,9 @@ function World() {
     <div className="world">
       <svg className="hill" aria-hidden="true">
         <defs>
+          <pattern id="mountain-paint" patternUnits="userSpaceOnUse" width="1000" height="1000">
+            <image href="/art/hill-painted.png" width="1000" height="1000" />
+          </pattern>
           <linearGradient id="mountain-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#d06a38" />
             <stop offset="0.35" stopColor="#c25627" />
@@ -131,6 +134,7 @@ function World() {
           </linearGradient>
         </defs>
         <path className="mountain" fill="url(#mountain-fill)" />
+        <path className="mountain-paint" fill="url(#mountain-paint)" />
         <path className="ridge" />
         <path className="ridge-band" />
         <path className="trail-ink trail-smudge" filter="url(#smudge)" />
@@ -144,7 +148,7 @@ function World() {
 
       <Title u={150} kicker="Before sunrise">The waiting line.<br /><span className="muted">Every city has one.</span></Title>
       {STORY.slice(0, 3).map((c, i) => (
-        <Block key={c.title} u={c.u} w={380}>
+        <Block key={c.title} u={c.u} w={380} place={i % 2 === 1 ? 'sky' : 'ground'} gap={2 * R + 24} origin={i % 2 === 1 ? 'br' : 'tl'}>
           <Slab as="article" className="ink" face="card" depth={12} radius={22} edge={CARD_EDGE}>
             <span className="card-num" aria-hidden="true">{['Α', 'Β', 'Γ'][i]}</span>
             <p className="card-kicker">{c.kicker}</p>
@@ -156,7 +160,7 @@ function World() {
 
       <Title u={1840} kicker="The boulder">Work that leaves<br />no trace.</Title>
       {STORY.slice(3).map((c, i) => (
-        <Block key={c.title} u={c.u} w={380}>
+        <Block key={c.title} u={c.u} w={380} place={i % 2 === 0 ? 'sky' : 'ground'} gap={2 * R + 24} origin={i % 2 === 0 ? 'br' : 'tl'}>
           <Slab as="article" className="ink" face="card" depth={12} radius={22} edge={CARD_EDGE}>
             <span className="card-num" aria-hidden="true">{['Δ', 'Ε'][i]}</span>
             <p className="card-kicker">{c.kicker}</p>

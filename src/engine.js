@@ -98,6 +98,7 @@ function buildHill() {
   E.hill.setAttribute('width', W)
   E.hill.setAttribute('height', H)
   E.mountain.setAttribute('d', `${pathFrom(ridge)}L${W} ${H}L0 ${H}Z`)
+  E.hill.querySelector('.mountain-paint').setAttribute('d', E.mountain.getAttribute('d'))
   E.ridge.setAttribute('d', pathFrom(ridge))
   // A painted band under the ridge, as on the shoulder of a vase.
   const band = ridge.slice()
@@ -215,6 +216,10 @@ export function measure() {
       lastR: -1,
     }
   })
+
+  // Fit the upper and lower tablets around the boulder's clear rolling lane.
+  e.tabletHeight = Math.max(...e.blocks.filter(b => b.el.querySelector('.card')).map(b => b.h), 0)
+  e.Sb = Math.min(e.Sb, (e.vh - HEADROOM - 90) / (2 * R + 80 + 2 * e.tabletHeight + 220))
 
   for (const a of main.querySelectorAll('.anchor')) a.style.top = `${Number(a.dataset.u)}px`
 
@@ -507,7 +512,7 @@ export function step(dt) {
   // of centre while climbing (so printed content trails behind it), then
   // centred under the summit.
   e.S = mix(e.hero.S, e.Sb, hz)
-  const climbY = Math.max(e.vh * 0.3, e.r * e.Sb + HEADROOM)
+  const climbY = HEADROOM + 50 + (R + 24 + e.tabletHeight + 110) * e.Sb
   e.anchor.x = mix(mix(e.hero.x, e.vw * 0.62, hz), e.vw * 0.5, sum)
   e.anchor.y = mix(mix(e.hero.y, climbY, hz), e.vh * 0.74, sum)
   const fade = Math.round((1 - smooth(0, 320, u)) * 100) / 100

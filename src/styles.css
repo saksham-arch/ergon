@@ -267,6 +267,7 @@ button {
   height: 100lvh;
   overflow: hidden;
   background:
+    url('/art/sky-painted.png') center / cover,
     radial-gradient(ellipse 55% 50% at 80% 8%, rgba(236, 170, 110, 0.32) 0%, transparent 70%),
     radial-gradient(ellipse 50% 40% at 12% 4%, rgba(255, 246, 232, 0.9) 0%, transparent 70%),
     linear-gradient(180deg, #eee1cc 0%, #f5ede1 58%);
@@ -3074,3 +3075,9 @@ span.slab {
 
 /* The decorative boulder canvas must never intercept the world controls. */
 .stage, .stage * { pointer-events: none !important; }
+
+/* Generated fresco texture follows the original animated hill silhouette. */
+.mountain-paint {
+  opacity: 0.78;
+  pointer-events: none;
+}
