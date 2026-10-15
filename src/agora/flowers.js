@@ -1,3 +1,4 @@
+import { DEMO_ORIGIN } from '../hermes/jobs.js'
 // A three.js layer drawn inside the MapLibre map: one glass-petalled flower
 // per job, standing on the real street where the work is, and the small
 // messengers that fly to a flower when you send word. It shares the map's
@@ -239,8 +240,7 @@ export function createFlowerLayer({ read, colorOf }) {
     render(gl, args) {
       const { jobs, selected, hover, sent = new Set() } = read()
       if (!origin) {
-        const c = map.getCenter()
-        origin = maplibregl.MercatorCoordinate.fromLngLat(c, 0)
+        origin = maplibregl.MercatorCoordinate.fromLngLat(DEMO_ORIGIN, 0)
         unit = origin.meterInMercatorCoordinateUnits()
       }
       if (!origin) return

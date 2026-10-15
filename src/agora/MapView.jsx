@@ -33,6 +33,7 @@ export default function MapView(props){
    map.on('load',()=>{
     if(dead)return
     try {
+     map.setProjection({type:'mercator'})
      greekify(map)
      map.addSource('reach',{type:'geojson',data:ring(state.current.origin,state.current.km)})
      map.addLayer({id:'reach-line',type:'line',source:'reach',paint:{'line-color':'#8c451e','line-width':2,'line-dasharray':[2,2]}})
@@ -50,10 +51,17 @@ export default function MapView(props){
        state.current.onPlaceSelect({...movedPlace(),focusZoom:17})
       })
       marker.on('dragstart',()=>{button.style.cursor='grabbing'})
-      marker.on('drag',()=>{const p=marker.getLngLat();state.current.landmarkPositions[landmark.id]=[p.lng,p.lat];map.triggerRepaint()})
+      marker.on('drag',()=>{if(map.isZooming()){marker.setLngLat(state.current.landmarkPositions[landmark.id]??landmark.lngLat);return}const p=marker.getLngLat();state.current.landmarkPositions[landmark.id]=[p.lng,p.lat];map.triggerRepaint()})
       marker.on('dragend',()=>{draggedAt=performance.now();button.style.cursor='grab'})
       landmarks.push(marker)
      }
+     const resizeTargets=()=>{
+      const height=Math.max(32,Math.min(260,(layer?.screenHeight()??50)*1.1))
+      for(const marker of landmarks){const el=marker.getElement();el.style.width=`${Math.max(32,height*.65)}px`;el.style.height=`${height}px`;el.style.minHeight='0';marker.setOffset([0,0])}
+     }
+     map.on('zoomstart',()=>landmarks.forEach(marker=>marker.setDraggable(false)))
+     map.on('zoomend',()=>{landmarks.forEach(marker=>marker.setDraggable(true));resizeTargets()})
+     map.on('zoom',resizeTargets);map.on('pitch',resizeTargets);resizeTargets()
      const el=document.createElement('div');el.className='map-origin';el.setAttribute('aria-hidden','true')
      markerRef.current=new maplibregl.Marker({element:el,draggable:true}).setLngLat(state.current.origin).addTo(map)
      markerRef.current.on('dragend',()=>{const p=markerRef.current.getLngLat();state.current.onMove([p.lng,p.lat])})

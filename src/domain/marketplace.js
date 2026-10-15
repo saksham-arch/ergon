@@ -5,12 +5,13 @@ export const allJobs=()=>[...JOBS,...marketplace.getSnapshot().data.listings]
 export const validPhone=p=>/^[+\d][\d\s()-]{6,19}$/.test(p.trim())
 export function saveProfile(role,profile){if(!['worker','employer'].includes(role)||!profile.name.trim()||!validPhone(profile.phone))throw Error('Enter your name and a valid phone number.');marketplace.set(s=>({...s,profiles:{...s.profiles,[role]:{name:profile.name.trim(),phone:profile.phone.trim()}}}))}
 export function publishJob(d){
+ if(d.fairWorkAccepted!==true)throw Error('Please accept the fair-work commitment before posting.')
  const lngLat=d.lngLat.map(Number)
  if(!d.title.trim()||!d.address.trim()||!TRADES.some(t=>t.id===d.trade)||!Number.isFinite(Number(d.pay))||Number(d.pay)<=0||!/^\d{4}-\d{2}-\d{2}$/.test(d.startDate)||Number.isNaN(Date.parse(d.startDate))||!['daily','weekly','completion'].includes(d.payday)||!d.hours.trim()||!Number.isInteger(Number(d.durationDays))||Number(d.durationDays)<1||!lngLat.every(Number.isFinite)||Math.abs(lngLat[0])>180||Math.abs(lngLat[1])>90)throw Error('Complete the work details and choose a valid location.')
  const profile=marketplace.getSnapshot().data.profiles.employer
  if(!profile.name||!validPhone(profile.phone))throw Error('Complete your employer profile first.')
  const id=`posted-${crypto.randomUUID()}`,x=(lngLat[0]-DEMO_ORIGIN[0])*111.32*Math.cos(DEMO_ORIGIN[1]*Math.PI/180)/KM,z=-(lngLat[1]-DEMO_ORIGIN[1])*110.57/KM
- const job={id,title:d.title.trim(),titleHi:d.title.trim(),trade:d.trade,sector:'private',pay:Number(d.pay),unit:'day',startDate:d.startDate,durationDays:Number(d.durationDays),hours:d.hours,hoursHi:d.hours,hoursCount:null,place:d.address.trim(),placeHi:d.address.trim(),bring:d.bring||'Agree with employer',bringHi:d.bring||'Agree with employer',payday:d.payday,fee:0,written:true,address:true,verification:'unverified',employer:profile.name,contact:profile.phone,owner:'employer',lngLat,x,z}
+ const job={id,title:d.title.trim(),titleHi:d.title.trim(),trade:d.trade,sector:'private',pay:Number(d.pay),unit:'day',startDate:d.startDate,durationDays:Number(d.durationDays),hours:d.hours,hoursHi:d.hours,hoursCount:null,place:d.address.trim(),placeHi:d.address.trim(),bring:d.bring||'Agree with employer',bringHi:d.bring||'Agree with employer',payday:d.payday,fee:0,written:true,address:true,verification:'unverified',employer:profile.name,contact:profile.phone,owner:'employer',fairWorkCommitment:{version:1,acceptedAt:Date.now()},lngLat,x,z}
  marketplace.set(s=>({...s,listings:[...s.listings,job]}));return job
 }
 export function requestBooking(jobId){
