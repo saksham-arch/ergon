@@ -1,0 +1,42 @@
+<section class="cinema-scroll" id="home" aria-label="A journey through the gardens of Artemis">
+ <div class="cinema-stage" id="cinema-stage">
+  <canvas id="journey-canvas" aria-label="Interactive Greek garden and four animated mythological scenes"></canvas>
+  <div class="cinema-grain" aria-hidden="true"></div><div class="cinema-vignette" aria-hidden="true"></div><div class="cinema-transition" aria-hidden="true"></div>
+  <div class="scene-border" aria-hidden="true"></div>
+  <div class="journey-loading" id="journey-loading"><span class="loading-emblem">Α</span><span>OPENING THE GARDENS</span></div>
+  <div class="journey-panel garden-panel is-active" data-panel="0">
+   <p class="eyebrow">THE GARDENS OF ARTEMIS</p><h1>A world<br>of <em>possibility.</em></h1>
+   <p class="garden-intro">Beyond these gates, your next chapter awaits.</p>
+   <button class="enter-garden" data-travel="1"><span>ENTER THE GARDENS</span><span class="enter-arrow">↓</span></button>
+  </div>
+  <div class="journey-panel chapter-panel" data-panel="1" aria-hidden="true" inert>
+   <p class="eyebrow"><span class="chapter-roman">I</span> SISYPHUS / OPPORTUNITY</p>
+   <h2>Every climb.<br><em>A new possibility.</em></h2><p class="chapter-description">The next step is yours to choose.<br>Select a stone on the path to discover nearby work.</p>
+   <div class="selected-opportunity"><span class="selection-kicker">YOUR NEXT OPPORTUNITY</span><h3 id="journey-job-title">Carpentry in Hasanpura</h3><div class="journey-job-meta"><strong id="journey-job-pay">₹900 <small>/ day</small></strong><span id="journey-job-time">9 am – 5 pm · 2 days</span></div><button class="button button-dark" id="journey-view-job">Explore this work <span>↗</span></button></div>
+   <a class="journey-secondary" href="#opportunities">Or browse all nearby work ↗</a>
+  </div>
+  <div class="journey-panel chapter-panel" data-panel="2" aria-hidden="true" inert>
+   <p class="eyebrow"><span class="chapter-roman">II</span> HEPHAESTUS / CRAFT</p><h2>Skill is forged.<br><em>Let yours shine.</em></h2>
+   <p class="chapter-description">No résumé can tell the whole story.<br>Show your trade, your experience, and the work you’re proud of.</p>
+   <div class="craft-selection" role="group" aria-label="Choose your craft"><button class="craft-chip active" data-craft="Carpentry" aria-pressed="true">Carpentry</button><button class="craft-chip" data-craft="Electrical" aria-pressed="false">Electrical</button><button class="craft-chip" data-craft="Painting" aria-pressed="false">Painting</button><button class="craft-chip" data-craft="Plumbing" aria-pressed="false">Plumbing</button></div>
+   <button class="button button-dark" data-action="profile">Forge my work card <span>↗</span></button><p class="scene-small-note">YOUR EXPERIENCE IS YOUR CREDENTIAL.</p>
+  </div>
+  <div class="journey-panel chapter-panel" data-panel="3" aria-hidden="true" inert>
+   <p class="eyebrow"><span class="chapter-roman">III</span> HERMES / TRUST</p><h2>A connection.<br><em>A clear promise.</em></h2>
+   <p class="chapter-description">Good work begins with understanding.<br>Bring the terms together before you commit.</p>
+   <div class="promise-list" role="group" aria-label="Explore clear job terms"><button data-promise="0" aria-pressed="false"><span class="promise-check">+</span><span>The work & hours<small>What you’ll do, and when you’ll finish</small></span><b>01</b></button><button data-promise="1" aria-pressed="false"><span class="promise-check">+</span><span>The pay<small>The amount, clearly agreed</small></span><b>02</b></button><button data-promise="2" aria-pressed="false"><span class="promise-check">+</span><span>The payment date<small>Know when the money should arrive</small></span><b>03</b></button></div>
+   <button class="button button-dark" id="review-promise">Review a sample agreement <span>↗</span></button>
+  </div>
+  <div class="journey-panel chapter-panel" data-panel="4" aria-hidden="true" inert>
+   <p class="eyebrow"><span class="chapter-roman">IV</span> ATHENA / SUPPORT</p><h2>Stand in wisdom.<br><em>Move with strength.</em></h2>
+   <p class="chapter-description">Your work has worth. So do your rights.<br>Find the knowledge and support for your next step.</p>
+   <div class="athena-support"><button data-support="schemes">Worker registration <span>↗</span></button><button data-support="documents">Documents & preparation <span>↗</span></button><button data-support="payment">Pay & resolving problems <span>↗</span></button></div>
+   <a class="journey-secondary" href="#opportunities">Your next opportunity is waiting ↓</a>
+  </div>
+  <div class="world-labels" id="world-labels" aria-label="Jobs along Sisyphus’s path" hidden><button class="stone-label active" data-stone="0" aria-pressed="true"><span>01</span><b>Carpentry</b><small>₹900 / day</small></button><button class="stone-label" data-stone="1" aria-pressed="false"><span>02</span><b>Electrical</b><small>₹1,100 / day</small></button><button class="stone-label" data-stone="2" aria-pressed="false"><span>03</span><b>Painting</b><small>₹850 / day</small></button></div>
+  <div class="scene-object-caption" id="scene-object-caption"><span class="caption-line"></span><p id="journey-object-name">THE HESPERIDES<small id="journey-object-note">A garden at the edge of possibility.</small></p></div>
+  <div class="journey-bottom"><span class="scroll-instruction" id="scroll-instruction">SCROLL TO OPEN THE GATES <span>↓</span></span><nav class="journey-chapters" aria-label="Jump to a chapter"><button data-travel="0" class="active" aria-current="step"><span>00</span> The garden</button><button data-travel="1"><span>01</span> Find work</button><button data-travel="2"><span>02</span> Your craft</button><button data-travel="3"><span>03</span> Build trust</button><button data-travel="4"><span>04</span> Your rights</button></nav><span class="journey-counter"><b id="journey-number">00</b> / 04</span></div>
+  <div class="journey-progress" aria-hidden="true"><span id="journey-progress-fill"></span></div>
+ </div>
+</section>
+<section class="journey-afterword"><span class="ornament">✧</span><p>Inspired by the gods.<br><em>Made for the people who build.</em></p><a href="#opportunities">YOUR NEXT CHAPTER ↓</a></section>

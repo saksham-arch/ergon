@@ -1,0 +1,1 @@
+{"name":"artemis-agora-prototype","private":true,"type":"module","scripts":{"start":"node server.mjs","check":"node --check dist/app.js && node --check dist/cinema.js && node --check dist/myth-models.js"}}
