@@ -55,7 +55,7 @@ const vertexShader = /* glsl */ `
 // hillside behind it, rays heading toward the viewer to a mirror copy in front.
 // Between them, a pale studio with soft light. The statue is painted into its
 // own small texture each frame and composited onto both planes, and the
-// viewer's camera blends in when they've opted in. A band of black glaze with
+// viewer's camera fills most of the ball when they've opted in. A band of black glaze with
 // a gold key pattern is inlaid around it, tilted off the view axis, so you can
 // see it roll.
 const fragmentShader = /* glsl */ `
@@ -111,15 +111,20 @@ const fragmentShader = /* glsl */ `
     return vec2(band, max(rim, key) * band);
   }
 
-  vec3 viewer(vec3 d, vec3 base) {
-    if (uCamOn <= 0.001 || d.z <= 0.0) return base;
-    vec2 h = d.xy / max(d.z, 0.05);
-    vec2 uv = vec2(0.5 - h.x * 0.38 / uCamAspect, 0.5 + h.y * 0.38);
-    vec2 q = abs(uv - 0.5);
-    float w = (1.0 - smoothstep(0.32, 0.5, max(q.x, q.y))) * smoothstep(0.15, 0.6, d.z) * uCamOn;
+  // How much of the viewer shows at this point of the ball: all but the rim.
+  float camWeight(vec3 n) {
+    return (1.0 - smoothstep(0.8, 0.96, length(n.xy))) * uCamOn;
+  }
+
+  // The viewer's camera, mirrored. A true convex mirror would squeeze them
+  // into the middle of the ball; this bulges them out like a fisheye instead,
+  // so their face fills most of it and only the rim keeps the hillside.
+  vec3 viewer(vec3 n) {
+    float th = acos(clamp(n.z, 0.0, 1.0)) / 1.5707963;
+    vec2 off = normalize(n.xy + 1e-6) * th * 0.45;
+    vec2 uv = 0.5 + vec2(-off.x / max(uCamAspect, 1.0), off.y * min(uCamAspect, 1.0));
     vec3 cam = texture2D(uCam, uv).rgb;
-    cam = mix(vec3(dot(cam, vec3(0.299, 0.587, 0.114))), cam, 0.7) * 1.08;
-    return mix(base, cam, w * 0.92);
+    return mix(vec3(dot(cam, vec3(0.299, 0.587, 0.114))), cam, 0.7) * 1.08;
   }
 
   // The world at doc (world units, y down): hillside copy plus the statue.
@@ -158,7 +163,12 @@ const fragmentShader = /* glsl */ `
       vec3 c = world(vec2(uBall.x + H.x, uBall.y - H.y));
       c = mix(c, c * c, 0.45); // chrome deepens what it mirrors
       env = mix(env, c, (1.0 - smoothstep(5.0 * uR, 11.0 * uR, t)) * 0.92);
-      env = viewer(Rs, env);
+    }
+
+    float cw = 0.0;
+    if (uCamOn > 0.001) {
+      cw = camWeight(n);
+      env = mix(env, viewer(n), cw * 0.9);
     }
 
     // Below the horizon reads a touch darker, like polished studio floor; the
@@ -170,7 +180,8 @@ const fragmentShader = /* glsl */ `
     // Chrome, black glaze and gold all mirror the same world, differently.
     vec2 inl = inlay(normalize(vO));
     vec3 col = env * vec3(0.97, 0.95, 0.93);
-    col = mix(col, env * 0.07 + vec3(0.012, 0.01, 0.009), inl.x);
+    // Over the viewer the glaze goes smoky, so the band doesn't black out their face.
+    col = mix(col, env * mix(0.07, 0.32, cw) + vec3(0.012, 0.01, 0.009), inl.x);
     col = mix(col, env * vec3(1.02, 0.74, 0.44), inl.y);
     // A warm clay rim where the sphere turns away.
     col += vec3(0.42, 0.16, 0.06) * pow(1.0 - max(n.z, 0.0), 4.0) * (1.0 - inl.x);

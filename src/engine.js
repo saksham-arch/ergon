@@ -19,6 +19,8 @@ const SLIP_AFTER = 0.9 // seconds of stillness before it starts to slip
 const SLAB_TILT_X = 10
 const SLAB_TILT_Y = 8
 const HOVER_TILT = 7
+const PUSH_GROW = 0.15 // the boulder swells by this much while it's being pushed
+const HEADROOM = 84 // screen px kept clear above the boulder while climbing (nav bar)
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
@@ -448,6 +450,13 @@ export function step(dt) {
 
   if (e.intro < 1) e.intro = Math.min(1, e.intro + dt / 1.7)
 
+  // The hero close-up eases out to the climbing view over the first stretch
+  // of scroll, and the summit view takes over near the top. The boulder is
+  // biggest in between, while it's being pushed.
+  const hz = smooth(0, 560, u)
+  const sum = smooth(CLIMB - 700, CLIMB - 150, u)
+  e.r = R * (1 + PUSH_GROW * hz * (1 - sum))
+
   // Stop pushing and the boulder starts to slip back.
   const moving = Math.abs(e.xt - prevXt) > 0.5
   e.idle = moving ? 0 : e.idle + dt
@@ -491,15 +500,13 @@ export function step(dt) {
   const camY = ground(e.view.x) - e.r
   e.view.y += (camY - e.view.y) * (e.intro < 1 ? 1 : 1 - Math.exp(-dt * 5))
 
-  // Zoom: the hero close-up eases out to the climbing view over the first
-  // stretch of scroll. Where the boulder sits on screen: the hero spot, then
-  // right of centre while climbing (so printed content trails behind it),
-  // then centred under the summit.
-  const hz = smooth(0, 560, u)
+  // Zoom, then where the boulder sits on screen: the hero spot, then right
+  // of centre while climbing (so printed content trails behind it), then
+  // centred under the summit.
   e.S = mix(e.hero.S, e.Sb, hz)
-  const sum = smooth(CLIMB - 700, CLIMB - 150, u)
+  const climbY = Math.max(e.vh * 0.3, e.r * e.Sb + HEADROOM)
   e.anchor.x = mix(mix(e.hero.x, e.vw * 0.62, hz), e.vw * 0.5, sum)
-  e.anchor.y = mix(mix(e.hero.y, e.vh * 0.3, hz), e.vh * 0.74, sum)
+  e.anchor.y = mix(mix(e.hero.y, climbY, hz), e.vh * 0.74, sum)
   const fade = Math.round((1 - smooth(0, 320, u)) * 100) / 100
   if (fade !== e.heroFade) {
     e.heroFade = fade
